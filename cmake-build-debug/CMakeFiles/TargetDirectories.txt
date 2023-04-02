@@ -1,0 +1,4 @@
+/home/lauwsj/PycharmProjects/fat-simonjulianl/cmake-build-debug/CMakeFiles/fat.dir
+/home/lauwsj/PycharmProjects/fat-simonjulianl/cmake-build-debug/CMakeFiles/valgrind.dir
+/home/lauwsj/PycharmProjects/fat-simonjulianl/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/lauwsj/PycharmProjects/fat-simonjulianl/cmake-build-debug/CMakeFiles/rebuild_cache.dir

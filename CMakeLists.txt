@@ -17,3 +17,8 @@ endif()
 set(SOURCE_FILES main.c)
 
 add_executable(fat ${SOURCE_FILES})
+add_custom_target(
+        valgrind
+        COMMAND
+        valgrind ./fat diskimage.img ck --leak-check=full --show-leak-kinds=all --verbose -error-exitcode=100
+)

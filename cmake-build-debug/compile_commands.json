@@ -1,0 +1,22 @@
+[
+{
+  "directory": "/home/lauwsj/PycharmProjects/fat-simonjulianl/cmake-build-debug",
+  "command": "/usr/bin/cc -g -fdiagnostics-color=always -Og -g -Wall -Wno-unused-result -std=gnu17 -o CMakeFiles/fat.dir/main.c.o -c /home/lauwsj/PycharmProjects/fat-simonjulianl/main.c",
+  "file": "/home/lauwsj/PycharmProjects/fat-simonjulianl/main.c"
+},
+{
+  "directory": "/home/lauwsj/PycharmProjects/fat-simonjulianl/cmake-build-debug",
+  "command": "/usr/bin/cc -g -fdiagnostics-color=always -Og -g -Wall -Wno-unused-result -std=gnu17 -o CMakeFiles/fat.dir/inspection.c.o -c /home/lauwsj/PycharmProjects/fat-simonjulianl/inspection.c",
+  "file": "/home/lauwsj/PycharmProjects/fat-simonjulianl/inspection.c"
+},
+{
+  "directory": "/home/lauwsj/PycharmProjects/fat-simonjulianl/cmake-build-debug",
+  "command": "/usr/bin/cc -g -fdiagnostics-color=always -Og -g -Wall -Wno-unused-result -std=gnu17 -o CMakeFiles/fat.dir/list.c.o -c /home/lauwsj/PycharmProjects/fat-simonjulianl/list.c",
+  "file": "/home/lauwsj/PycharmProjects/fat-simonjulianl/list.c"
+},
+{
+  "directory": "/home/lauwsj/PycharmProjects/fat-simonjulianl/cmake-build-debug",
+  "command": "/usr/bin/cc -g -fdiagnostics-color=always -Og -g -Wall -Wno-unused-result -std=gnu17 -o CMakeFiles/fat.dir/common.c.o -c /home/lauwsj/PycharmProjects/fat-simonjulianl/common.c",
+  "file": "/home/lauwsj/PycharmProjects/fat-simonjulianl/common.c"
+}
+]

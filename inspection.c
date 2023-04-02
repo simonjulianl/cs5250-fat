@@ -3,33 +3,18 @@
 //
 #include <fcntl.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <sys/mman.h>
-#include <unistd.h>
+#include <wchar.h>
 
 #include "inspection.h"
+#include "common.h"
+
 
 /*
  * Check if the given disk image is a FAT32 disk image.
  * Return true if it is, false otherwise.
  */
-uint32_t get_fat_version(const char *disk) {
-    int fd;
-    fd = open(disk, O_RDONLY);
-    if (fd < 0) {
-        perror("open");
-        exit(1);
-    }
-
-    uint8_t *image = mmap(NULL, BPB_SIZE, PROT_READ, MAP_PRIVATE, fd, 0);
-    if (image == (void *) -1) {
-        perror("mmap");
-        exit(1);
-    }
-    close(fd);
-
-    const struct BPB *hdr = (const struct BPB *) image;
-
+uint32_t get_fat_version(const struct BPB *hdr) {
     /*
      * Manual 3.5: Determination of FAT type when mounting the volume
      * The FAT type is determined solely by the count of clusters on the volume (CountOfClusters).
@@ -40,7 +25,6 @@ uint32_t get_fat_version(const char *disk) {
     data_sectors = get_data_sectors(hdr, root_dir_sectors, fat_size);
     count_of_clusters = data_sectors / hdr->BPB_SecPerClus;
 
-    munmap(image, BPB_SIZE);
     if (count_of_clusters < 4085) {
         return 12;
     } else if (count_of_clusters < 65525) {
@@ -80,3 +64,32 @@ uint32_t get_fat_sector_size(const struct BPB *hdr) {
     }
     return fat_size;
 }
+
+uint32_t get_first_data_sector(const struct BPB *hdr) {
+    return hdr->BPB_RsvdSecCnt + (hdr->BPB_NumFATs * get_fat_sector_size(hdr)) +
+           get_root_dir_sectors(hdr);
+};
+
+void inspect_fat(const char *diskimg_path) {
+    off_t size;
+    uint8_t *image;
+    get_bpb_mmap(diskimg_path, &size, &image);
+
+    /*
+     * Print some information about the disk image.
+     */
+    const struct BPB *hdr = (const struct BPB *) image;
+    uint32_t fat_size = get_fat_sector_size(hdr);
+    uint32_t root_dir_sectors = get_root_dir_sectors(hdr);
+
+    wprintf(L"FAT%d filesystem\n", get_fat_version(hdr));
+    wprintf(L"BytsPerSec = %u\n", hdr->BPB_BytsPerSec);
+    wprintf(L"SecPerClus = %u\n", hdr->BPB_SecPerClus);
+    wprintf(L"RsvdSecCnt = %u\n", hdr->BPB_RsvdSecCnt);
+    wprintf(L"FATsSecCnt = %u\n", hdr->BPB_NumFATs * fat_size);
+    wprintf(L"RootSecCnt = %u\n", root_dir_sectors);
+    wprintf(L"DataSecCnt = %u\n", get_data_sectors(hdr, root_dir_sectors, fat_size));
+
+    munmap(image, size);
+}
+

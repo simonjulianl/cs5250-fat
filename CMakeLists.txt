@@ -14,11 +14,11 @@ if(ENABLE_ASAN)
   add_link_options(-fsanitize=address -fno-omit-frame-pointer)
 endif()
 
-set(SOURCE_FILES main.c inspection.c)
+set(SOURCE_FILES main.c inspection.c list.c common.c)
 
 add_executable(fat ${SOURCE_FILES})
 add_custom_target(
         valgrind
         COMMAND
-        valgrind ./fat diskimage.img ck --leak-check=full --show-leak-kinds=all --verbose -error-exitcode=100
+        valgrind ./fat diskimage.img ls --leak-check=full --show-leak-kinds=all --verbose -error-exitcode=100
 )

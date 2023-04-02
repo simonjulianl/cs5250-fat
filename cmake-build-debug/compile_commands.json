@@ -1,7 +1,0 @@
-[
-{
-  "directory": "/home/lauwsj/PycharmProjects/fat-simonjulianl/cmake-build-debug",
-  "command": "/usr/bin/cc -g -fdiagnostics-color=always -Og -g -Wall -Wno-unused-result -std=gnu17 -o CMakeFiles/fat.dir/main.c.o -c /home/lauwsj/PycharmProjects/fat-simonjulianl/main.c",
-  "file": "/home/lauwsj/PycharmProjects/fat-simonjulianl/main.c"
-}
-]

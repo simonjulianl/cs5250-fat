@@ -14,7 +14,7 @@ if(ENABLE_ASAN)
   add_link_options(-fsanitize=address -fno-omit-frame-pointer)
 endif()
 
-set(SOURCE_FILES main.c)
+set(SOURCE_FILES main.c inspection.c)
 
 add_executable(fat ${SOURCE_FILES})
 add_custom_target(

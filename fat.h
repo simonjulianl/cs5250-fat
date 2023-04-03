@@ -79,7 +79,7 @@ struct FSInfo {
 #define ATTR_DIRECTORY 0x10
 #define ATTR_ARCHIVE   0x20
 #define ATTR_LONG_NAME                                                         \
-    ATTR_READ_ONLY | ATTR_HIDDEN | ATTR_SYSTEM | ATTR_VOLUME_ID
+    (ATTR_READ_ONLY | ATTR_HIDDEN | ATTR_SYSTEM | ATTR_VOLUME_ID)
 
 union DirEntry {
     // Directory Structure (RTFM: Section 6)

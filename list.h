@@ -7,6 +7,7 @@
 
 #define ENTRY_SIZE_BYTES 32
 #define LAST_LONG_ENTRY 0x40
+#define DEFAULT_FAT_NUMBER 1
 
 #include "fat.h"
 

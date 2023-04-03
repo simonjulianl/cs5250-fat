@@ -16,6 +16,10 @@ endif()
 
 set(SOURCE_FILES main.c inspection.c list.c common.c)
 
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+    add_compile_definitions(DEBUG)
+endif()
+
 add_executable(fat ${SOURCE_FILES})
 add_custom_target(
         valgrind

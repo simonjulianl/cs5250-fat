@@ -4,6 +4,7 @@
 
 #include "inspection.h"
 #include "list.h"
+#include "remove.h"
 
 
 int main(int argc, char *argv[]) {
@@ -19,8 +20,9 @@ int main(int argc, char *argv[]) {
         inspect_fat(diskimg_path);
     } else if (strcmp(op, "ls") == 0) {
         list_fat(diskimg_path);
+    } else if (strcmp(op, "rm") == 0) {
+        remove_fat(diskimg_path, argv[3]);
     } else {
-
     }
 }
 

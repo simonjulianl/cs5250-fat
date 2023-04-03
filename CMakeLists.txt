@@ -14,7 +14,7 @@ if(ENABLE_ASAN)
   add_link_options(-fsanitize=address -fno-omit-frame-pointer)
 endif()
 
-set(SOURCE_FILES main.c inspection.c list.c common.c)
+set(SOURCE_FILES main.c inspection.c list.c common.c remove.c)
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
     add_compile_definitions(DEBUG)

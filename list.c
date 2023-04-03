@@ -6,47 +6,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
 #include <linux/limits.h>
 #include <wchar.h>
 
 #include "list.h"
 #include "common.h"
 #include "inspection.h"
-
-uint32_t get_sector_from_cluster(const struct BPB *hdr, uint32_t N, uint32_t first_data_sector);
-
-void populate_directory_name(union DirEntry *dir_entry, wchar_t *directory_name);
-
-bool isLastLongName(uint8_t ordinal_value);
-
-wchar_t combine_bytes(uint8_t high_byte, uint8_t low_byte);
-
-void list_data_dir_one_cluster(const struct BPB *hdr, uint32_t cluster_number, FILE *f, wchar_t *prefix);
-
-uint32_t get_entries_per_cluster(const struct BPB *hdr);
-
-uint32_t get_next_cluster(const struct BPB *hdr, uint32_t cluster_number, FILE *f);
-
-void list_data_dir(const struct BPB *hdr, uint32_t cluster_number, FILE *f, wchar_t *prefix);
-
-void list_root_dir(const struct BPB *hdr, FILE *f);
-
-void read_dir_helper(const struct BPB *hdr, FILE *f, uint32_t max_total_entries, wchar_t *prefix);
-
-bool is_excluded_dir(union DirEntry *dir_entry);
-
-void hexdump(const void *data, size_t size) {
-#warning "You must remove this function before submitting."
-    FILE *proc;
-
-    proc = popen("hexdump -C", "w");
-    if (proc == NULL) {
-        perror("popen");
-        exit(1);
-    }
-    fwrite(data, 1, size, proc);
-}
 
 void list_fat(const char *diskimg_path) {
     off_t size;
@@ -79,20 +44,19 @@ void list_data_dir_one_cluster(const struct BPB *hdr, uint32_t cluster_number, F
 
 void read_dir_helper(const struct BPB *hdr, FILE *f, uint32_t max_total_entries, wchar_t *prefix) {
     union DirEntry dir_entry;
-    bool is_last = false;
-    wchar_t* prefixes[max_total_entries];
+    wchar_t *prefixes[max_total_entries];
     uint32_t next_entry[max_total_entries];
     uint32_t idx = 0;
+    uint32_t offset = ftell(f);
 
     for (uint32_t i = 0;
          i < max_total_entries &&
-         fread(&dir_entry, ENTRY_SIZE_BYTES, 1, f) == 1 &&
-         !is_last;
+         fread(&dir_entry, ENTRY_SIZE_BYTES, 1, f) == 1;
          i++) {
+        offset += ENTRY_SIZE_BYTES;
         wchar_t directory_name[PATH_MAX] = {0};
         if (dir_entry.dir.DIR_Name[0] == 0) {
-            is_last = true; // everything following this is free
-            continue;
+            break;
         }
 
         if (dir_entry.dir.DIR_Name[0] == 0xE5) {
@@ -100,10 +64,6 @@ void read_dir_helper(const struct BPB *hdr, FILE *f, uint32_t max_total_entries,
         }
 
         if (dir_entry.ldir.LDIR_Attr != ATTR_LONG_NAME) {
-            if (!is_excluded_dir(&dir_entry)) {
-                 wprintf(L"%s\n", dir_entry.dir.DIR_Name);
-            }
-
             continue;
         }
 
@@ -123,15 +83,20 @@ void read_dir_helper(const struct BPB *hdr, FILE *f, uint32_t max_total_entries,
             perror("fread");
             exit(EXIT_FAILURE);
         } // read the short entry
-        if (is_excluded_dir(&dir_entry)) {
+
+        if (is_excluded_dir(&dir_entry) || dir_entry.dir.DIR_Name[0] == 0xe5) {
             continue;
+        }
+
+        if (dir_entry.dir.DIR_Name[0] == 0x00) {
+            break;
         }
 
         if (dir_entry.dir.DIR_Attr == ATTR_DIRECTORY) { // supporting unicode
             uint32_t directory_cluster;
             wprintf(L"%ls%ls/\n", prefix, directory_name);
 
-            wchar_t result[PATH_MAX]; // concatenate the path
+            wchar_t *result = malloc(PATH_MAX); // concatenate the path
             wcscpy(result, prefix);
             wcscat(result, directory_name);
             wcscat(result, L"/");
@@ -147,6 +112,7 @@ void read_dir_helper(const struct BPB *hdr, FILE *f, uint32_t max_total_entries,
 
     for (uint32_t i = 0; i < idx; i++) {
         list_data_dir(hdr, next_entry[i], f, prefixes[i]);
+        free(prefixes[i]);
     }
 }
 
@@ -208,27 +174,11 @@ uint32_t get_entries_per_cluster(const struct BPB *hdr) {
 }
 
 uint32_t get_next_cluster(const struct BPB *hdr, uint32_t cluster_number, FILE *f) {
-    uint32_t fat_offset, fat_entry_bytes;
-    switch (get_fat_version(hdr)) {
-        case 32:
-            fat_offset = cluster_number * 4;
-            fat_entry_bytes = 4;
-            break;
-        case 16:
-            fat_offset = cluster_number * 2;
-            fat_entry_bytes = 2;
-            break;
-        default:
-            /**
-             * Since its stored in 3 bytes, we can get upper half or lower half
-             * attempt to get the lower half and read the two fat entries
-             */
-            fat_offset = cluster_number + cluster_number / 2;
-            fat_entry_bytes = 2;
-    }
-
+    uint32_t fat_entry_bytes;
     uint32_t entry;
-    uint32_t offset = hdr->BPB_RsvdSecCnt * hdr->BPB_BytsPerSec + fat_offset;
+    uint32_t offset;
+    get_offset_given_cluster(hdr, cluster_number, &fat_entry_bytes, &offset);
+
     fseek(f, offset, SEEK_SET);
     fread(&entry, fat_entry_bytes, 1, f);
     switch (get_fat_version(hdr)) {
@@ -237,7 +187,7 @@ uint32_t get_next_cluster(const struct BPB *hdr, uint32_t cluster_number, FILE *
         case 16:
             return entry & 0x0000FFFF;
         default:
-            if (cluster_number % 2 == 1) {
+            if (cluster_number & 0x0001) {
                 // we are getting the last half of the three bytes, there are 4 bits noise
                 return (entry >> 4) & 0x00000FFF;
             } else {
@@ -245,6 +195,30 @@ uint32_t get_next_cluster(const struct BPB *hdr, uint32_t cluster_number, FILE *
                 return entry & 0x00000FFF;
             }
     }
+}
+
+void
+get_offset_given_cluster(const struct BPB *hdr, uint32_t cluster_number, uint32_t *fat_entry_bytes, uint32_t *offset) {
+    uint32_t fat_offset;
+    switch (get_fat_version(hdr)) {
+        case 32:
+            fat_offset = cluster_number * 4;
+            (*fat_entry_bytes) = 4;
+            break;
+        case 16:
+            fat_offset = cluster_number * 2;
+            (*fat_entry_bytes) = 2;
+            break;
+        default:
+            /**
+             * Since its stored in 3 bytes, we can get upper half or lower half
+             * attempt to get the lower half and read the two fat entries
+             */
+            fat_offset = cluster_number + cluster_number / 2;
+            (*fat_entry_bytes) = 2;
+    }
+
+    (*offset) = hdr->BPB_RsvdSecCnt * hdr->BPB_BytsPerSec + fat_offset;
 }
 
 void list_data_dir(const struct BPB *hdr, uint32_t cluster_number, FILE *f, wchar_t *prefix) {

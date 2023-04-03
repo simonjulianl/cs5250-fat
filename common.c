@@ -35,4 +35,14 @@ uint32_t convert_sector_to_byte_offset(const struct BPB *hdr, uint32_t sector_nu
     return sector_number * hdr->BPB_BytsPerSec;
 }
 
-// TODO: Get FAT entry given a cluster number
+void hexdump(const void *data, size_t size) {
+#warning "You must remove this function before submitting."
+    FILE *proc;
+
+    proc = popen("hexdump -C", "w");
+    if (proc == NULL) {
+        perror("popen");
+        exit(1);
+    }
+    fwrite(data, 1, size, proc);
+}

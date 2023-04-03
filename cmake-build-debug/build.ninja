@@ -50,25 +50,36 @@ cmake_ninja_workdir = /home/lauwsj/PycharmProjects/fat-simonjulianl/cmake-build-
 build cmake_object_order_depends_target_fat: phony || CMakeFiles/fat.dir
 
 build CMakeFiles/fat.dir/main.c.o: C_COMPILER__fat_Debug /home/lauwsj/PycharmProjects/fat-simonjulianl/main.c || cmake_object_order_depends_target_fat
+  DEFINES = -DDEBUG
   DEP_FILE = CMakeFiles/fat.dir/main.c.o.d
   FLAGS = -g -fdiagnostics-color=always -Og -g -Wall -Wno-unused-result -std=gnu17
   OBJECT_DIR = CMakeFiles/fat.dir
   OBJECT_FILE_DIR = CMakeFiles/fat.dir
 
 build CMakeFiles/fat.dir/inspection.c.o: C_COMPILER__fat_Debug /home/lauwsj/PycharmProjects/fat-simonjulianl/inspection.c || cmake_object_order_depends_target_fat
+  DEFINES = -DDEBUG
   DEP_FILE = CMakeFiles/fat.dir/inspection.c.o.d
   FLAGS = -g -fdiagnostics-color=always -Og -g -Wall -Wno-unused-result -std=gnu17
   OBJECT_DIR = CMakeFiles/fat.dir
   OBJECT_FILE_DIR = CMakeFiles/fat.dir
 
 build CMakeFiles/fat.dir/list.c.o: C_COMPILER__fat_Debug /home/lauwsj/PycharmProjects/fat-simonjulianl/list.c || cmake_object_order_depends_target_fat
+  DEFINES = -DDEBUG
   DEP_FILE = CMakeFiles/fat.dir/list.c.o.d
   FLAGS = -g -fdiagnostics-color=always -Og -g -Wall -Wno-unused-result -std=gnu17
   OBJECT_DIR = CMakeFiles/fat.dir
   OBJECT_FILE_DIR = CMakeFiles/fat.dir
 
 build CMakeFiles/fat.dir/common.c.o: C_COMPILER__fat_Debug /home/lauwsj/PycharmProjects/fat-simonjulianl/common.c || cmake_object_order_depends_target_fat
+  DEFINES = -DDEBUG
   DEP_FILE = CMakeFiles/fat.dir/common.c.o.d
+  FLAGS = -g -fdiagnostics-color=always -Og -g -Wall -Wno-unused-result -std=gnu17
+  OBJECT_DIR = CMakeFiles/fat.dir
+  OBJECT_FILE_DIR = CMakeFiles/fat.dir
+
+build CMakeFiles/fat.dir/remove.c.o: C_COMPILER__fat_Debug /home/lauwsj/PycharmProjects/fat-simonjulianl/remove.c || cmake_object_order_depends_target_fat
+  DEFINES = -DDEBUG
+  DEP_FILE = CMakeFiles/fat.dir/remove.c.o.d
   FLAGS = -g -fdiagnostics-color=always -Og -g -Wall -Wno-unused-result -std=gnu17
   OBJECT_DIR = CMakeFiles/fat.dir
   OBJECT_FILE_DIR = CMakeFiles/fat.dir
@@ -81,7 +92,7 @@ build CMakeFiles/fat.dir/common.c.o: C_COMPILER__fat_Debug /home/lauwsj/PycharmP
 #############################################
 # Link the executable fat
 
-build fat: C_EXECUTABLE_LINKER__fat_Debug CMakeFiles/fat.dir/main.c.o CMakeFiles/fat.dir/inspection.c.o CMakeFiles/fat.dir/list.c.o CMakeFiles/fat.dir/common.c.o
+build fat: C_EXECUTABLE_LINKER__fat_Debug CMakeFiles/fat.dir/main.c.o CMakeFiles/fat.dir/inspection.c.o CMakeFiles/fat.dir/list.c.o CMakeFiles/fat.dir/common.c.o CMakeFiles/fat.dir/remove.c.o
   FLAGS = -g
   OBJECT_DIR = CMakeFiles/fat.dir
   POST_BUILD = :
@@ -123,7 +134,7 @@ build rebuild_cache: phony CMakeFiles/rebuild_cache.util
 # Custom command for CMakeFiles/valgrind
 
 build CMakeFiles/valgrind | ${cmake_ninja_workdir}CMakeFiles/valgrind: CUSTOM_COMMAND
-  COMMAND = cd /home/lauwsj/PycharmProjects/fat-simonjulianl/cmake-build-debug && valgrind ./fat diskimage.img ck --leak-check=full --show-leak-kinds=all --verbose -error-exitcode=100
+  COMMAND = cd /home/lauwsj/PycharmProjects/fat-simonjulianl/cmake-build-debug && valgrind ./fat diskimage.img ls --leak-check=full --show-leak-kinds=all --verbose -error-exitcode=100
 
 # =============================================================================
 # Target aliases.

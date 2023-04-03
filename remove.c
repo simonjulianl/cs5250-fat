@@ -307,7 +307,6 @@ void mark_entry_unused(union DirEntry *file_entry, FILE *f) {
     uint32_t dir_offset = (*file_entry).dir.DIR_FileSize;
     uint8_t removed_byte = 0xE5;
     fseek(f, dir_offset, SEEK_SET);
-    wprintf(L"dir_offset %d", dir_offset);
     fwrite(&removed_byte, 1, 1, f);
 
 #ifdef DEBUG

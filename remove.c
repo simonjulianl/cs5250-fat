@@ -47,6 +47,8 @@ void remove_object(const struct BPB *hdr, union DirEntry dir_entry, FILE *f);
 
 void remove_objects_one_cluster(const struct BPB *hdr, uint32_t cluster_number, FILE *f);
 
+void root_remove(const struct BPB *hdr, FILE *f);
+
 int remove_fat(const char *diskimg_path, const char *path) {
     if (path != NULL && path[0] != '/') {
         perror("Invalid absolute path");
@@ -94,12 +96,7 @@ int remove_fat(const char *diskimg_path, const char *path) {
             free(name[i]);
         }
     } else {
-        uint32_t error_value = get_error_value(hdr);
-        uint32_t cluster_number = hdr->fat32.BPB_RootClus;
-        do {
-            remove_objects_one_cluster(hdr, cluster_number, f);
-            cluster_number = get_next_cluster(hdr, cluster_number, f);
-        } while (cluster_number > 0x2 && cluster_number < error_value);
+        root_remove(hdr, f);
     }
 
     fclose(f);
@@ -186,10 +183,21 @@ union DirEntry get_dir_entry_helper(const struct BPB *hdr, FILE *f, uint32_t max
             ordinal_value = dir_entry.ldir.LDIR_Ord;
         }
 
-        if (fread(&dir_entry, ENTRY_SIZE_BYTES, 1, f) != 1) {
-            perror("fread");
-            exit(EXIT_FAILURE);
-        } // read the short entry
+        /**
+         * 00000000  41 74 00 65 00 73 00 74  00 69 00 0f 00 f6 6e 00  |At.e.s.t.i....n.|
+         * 00000010  67 00 2e 00 70 00 64 00  66 00 00 00 00 00 ff ff  |g...p.d.f.......|
+         * 00000020  41 74 00 65 00 73 00 74  00 69 00 0f 00 f6 6e 00  |At.e.s.t.i....n.|
+         * 00000030  67 00 2e 00 70 00 64 00  66 00 00 00 00 00 ff ff  |g...p.d.f.......|
+         *
+         * most likely the second one is long name directory entry set, but it's not explained well in the docs
+         */
+
+        while (dir_entry.dir.DIR_Attr == ATTR_LONG_NAME) {
+            if (fread(&dir_entry, ENTRY_SIZE_BYTES, 1, f) != 1) {
+                perror("fread");
+                exit(EXIT_FAILURE);
+            } // read the short entry
+        }
 
         uint32_t directory_cluster = get_associated_cluster(&dir_entry);
 
@@ -282,7 +290,6 @@ void remove_file(const struct BPB *hdr, union DirEntry file_entry, FILE *f) {
     uint32_t error_value = get_error_value(hdr);
     uint32_t cluster_number, offset, fat_entry_bytes;
     uint32_t entry, next_cluster;
-
     for (cluster_number = get_associated_cluster(&file_entry);
          cluster_number > 0x2 && cluster_number < error_value;) {
         next_cluster = get_next_cluster(hdr, cluster_number, f);
@@ -300,8 +307,17 @@ void mark_entry_unused(union DirEntry *file_entry, FILE *f) {
     uint32_t dir_offset = (*file_entry).dir.DIR_FileSize;
     uint8_t removed_byte = 0xE5;
     fseek(f, dir_offset, SEEK_SET);
+    wprintf(L"dir_offset %d", dir_offset);
     fwrite(&removed_byte, 1, 1, f);
+
+#ifdef DEBUG
+    uint32_t *entry = malloc(32);
+    fseek(f, dir_offset, SEEK_SET);
+    fread(entry, 32, 1, f);
+    hexdump(entry, 32);
+#endif
 }
+
 void remove_object(const struct BPB *hdr, union DirEntry dir_entry, FILE *f) {
     uint32_t cluster_number;
 
@@ -358,5 +374,78 @@ void remove_objects_one_cluster(const struct BPB *hdr, uint32_t cluster_number, 
 
     for (int i = 0; i < idx; i++) {
         remove_object(hdr, to_be_removed[i], f);
+    }
+}
+
+void root_remove(const struct BPB *hdr, FILE *f) {
+    union DirEntry dir_entry;
+    uint32_t max_total_entries = get_entries_per_cluster(hdr);
+    wchar_t *names[max_total_entries];
+    uint32_t idx = 0;
+
+    uint32_t sector_number = get_sector_from_cluster(hdr, hdr->fat32.BPB_RootClus, get_first_data_sector(hdr));
+    uint32_t offset = convert_sector_to_byte_offset(hdr, sector_number);
+
+    fseek(f, offset, SEEK_SET);
+    for (uint32_t i = 0;
+         i < max_total_entries &&
+         fread(&dir_entry, ENTRY_SIZE_BYTES, 1, f) == 1;
+         i++) {
+        wchar_t directory_name[PATH_MAX] = {0};
+        if (dir_entry.dir.DIR_Name[0] == 0) {
+            break;
+        }
+
+        if (dir_entry.dir.DIR_Name[0] == 0xE5) {
+            continue; // free block
+        }
+
+        if (dir_entry.ldir.LDIR_Attr != ATTR_LONG_NAME) {
+            continue;
+        }
+
+        populate_directory_name(&dir_entry, directory_name);
+        uint8_t ordinal_value = dir_entry.ldir.LDIR_Ord;
+        while (!isLastLongName(ordinal_value)) {
+            if (fread(&dir_entry, ENTRY_SIZE_BYTES, 1, f) != 1) {
+                perror("fread");
+                exit(EXIT_FAILURE);
+            } // read again
+
+            populate_directory_name(&dir_entry, directory_name);
+            ordinal_value = dir_entry.ldir.LDIR_Ord;
+        }
+
+        while (dir_entry.dir.DIR_Attr == ATTR_LONG_NAME) {
+            if (fread(&dir_entry, ENTRY_SIZE_BYTES, 1, f) != 1) {
+                perror("fread");
+                exit(EXIT_FAILURE);
+            } // read the short entry
+        }
+
+        if (is_excluded_dir(&dir_entry) || dir_entry.dir.DIR_Name[0] == 0xe5) {
+            continue;
+        }
+
+        if (dir_entry.dir.DIR_Name[0] == 0x00) {
+            break;
+        }
+
+        wchar_t *result = malloc(PATH_MAX); // concatenate the path
+        wcscat(result, directory_name);
+        wcscat(result, L"\0");
+        names[idx++] = result;
+    }
+
+    for (uint32_t i = 0; i < idx; i++) {
+        wchar_t *short_names[] = {names[i]};
+        union DirEntry entry = get_dir_entry_on_name(hdr, short_names, f, 0, 1);
+        if (!is_valid_dir_entry(&entry)) {
+            perror("Could not locate the exact entry");
+            exit(EXIT_FAILURE);
+        }
+
+        remove_object(hdr, entry, f);
+        free(names[i]);
     }
 }

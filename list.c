@@ -47,13 +47,11 @@ void read_dir_helper(const struct BPB *hdr, FILE *f, uint32_t max_total_entries,
     wchar_t *prefixes[max_total_entries];
     uint32_t next_entry[max_total_entries];
     uint32_t idx = 0;
-    uint32_t offset = ftell(f);
 
     for (uint32_t i = 0;
          i < max_total_entries &&
          fread(&dir_entry, ENTRY_SIZE_BYTES, 1, f) == 1;
          i++) {
-        offset += ENTRY_SIZE_BYTES;
         wchar_t directory_name[PATH_MAX] = {0};
         if (dir_entry.dir.DIR_Name[0] == 0) {
             break;
@@ -79,10 +77,13 @@ void read_dir_helper(const struct BPB *hdr, FILE *f, uint32_t max_total_entries,
             ordinal_value = dir_entry.ldir.LDIR_Ord;
         }
 
-        if (fread(&dir_entry, ENTRY_SIZE_BYTES, 1, f) != 1) {
-            perror("fread");
-            exit(EXIT_FAILURE);
-        } // read the short entry
+        // avoid long name directory entry set
+        while (dir_entry.dir.DIR_Attr == ATTR_LONG_NAME) {
+            if (fread(&dir_entry, ENTRY_SIZE_BYTES, 1, f) != 1) {
+                perror("fread");
+                exit(EXIT_FAILURE);
+            } // read the short entry
+        }
 
         if (is_excluded_dir(&dir_entry) || dir_entry.dir.DIR_Name[0] == 0xe5) {
             continue;

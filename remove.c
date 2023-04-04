@@ -153,6 +153,24 @@ union DirEntry get_dir_entry_helper(const struct BPB *hdr, FILE *f, uint32_t max
         if (dir_entry.ldir.LDIR_Attr != ATTR_LONG_NAME) {
             uint32_t directory_cluster = get_associated_cluster(&dir_entry);
 
+            if (!is_excluded_dir(&dir_entry)) { // there are times when there are files without long name
+                // there are times when it doesn't have long name
+                wchar_t *temp_pointer = convert_short_name_wchar(&dir_entry, i);
+                if (wcscmp(temp_pointer, desired_name) == 0 && dir_entry.dir.DIR_Name[0] != 0xe5) {
+                    free(temp_pointer);
+                    if (current_index + 1 == size) {
+                        dir_entry = embed_offset(f, &dir_entry);
+                        return dir_entry;
+                    }
+
+                    if (current_index + 1 != size && dir_entry.dir.DIR_Attr != ATTR_DIRECTORY) {
+                        return createNullDirEntry(); // not the last entry but not a directory
+                    }
+
+                    return get_data_dir(hdr, directory_cluster, f, names, current_index + 1, size);
+                }
+            }
+
             // This is just . or .., otherwise it should have long name implementation or it must be corrupted data
             bool is_zero_name = dir_entry.dir.DIR_Name[0] == 0x00;
             if (is_zero_name) {
@@ -385,79 +403,10 @@ void remove_objects_one_cluster(const struct BPB *hdr, uint32_t cluster_number, 
 }
 
 void root_remove(const struct BPB *hdr, FILE *f) {
-    union DirEntry dir_entry;
-    uint32_t max_total_entries = get_entries_per_cluster(hdr);
-    wchar_t *names[max_total_entries];
-    uint32_t idx = 0;
-
-    uint32_t sector_number = get_sector_from_cluster(hdr, hdr->fat32.BPB_RootClus, get_first_data_sector(hdr));
-    uint32_t offset = convert_sector_to_byte_offset(hdr, sector_number);
-
-    fseek(f, offset, SEEK_SET);
-    for (uint32_t i = 0;
-         i < max_total_entries &&
-         fread(&dir_entry, ENTRY_SIZE_BYTES, 1, f) == 1;
-         i++) {
-        wchar_t directory_name[PATH_MAX] = {0};
-        union DirEntry current_names[max_total_entries];
-        uint32_t name_offset = 0;
-        memcpy(&current_names[name_offset++], &dir_entry, ENTRY_SIZE_BYTES);
-
-        if (dir_entry.dir.DIR_Name[0] == 0) {
-            break;
-        }
-
-        if (dir_entry.dir.DIR_Name[0] == 0xE5) {
-            continue; // free block
-        }
-
-        if (dir_entry.ldir.LDIR_Attr != ATTR_LONG_NAME) {
-            continue;
-        }
-
-        // get all the names until short entry
-        while (dir_entry.dir.DIR_Attr == ATTR_LONG_NAME) {
-            if (fread(&dir_entry, ENTRY_SIZE_BYTES, 1, f) != 1) {
-                perror("fread");
-                exit(EXIT_FAILURE);
-            } // read the short entry
-            memcpy(&current_names[name_offset++], &dir_entry, ENTRY_SIZE_BYTES);
-        }
-
-        uint32_t first_offset = name_offset - 2;
-        uint8_t ordinal_value = current_names[first_offset + 1].ldir.LDIR_Ord;
-        while ((ordinal_value & LAST_LONG_ENTRY) != LAST_LONG_ENTRY) {
-            first_offset--;
-            ordinal_value = current_names[first_offset].ldir.LDIR_Ord;
-        }
-
-        for (uint32_t j = first_offset; j < name_offset - 1; j++) {
-            populate_directory_name(&current_names[j], directory_name);
-        }
-
-        if (is_excluded_dir(&dir_entry) || dir_entry.dir.DIR_Name[0] == 0xe5) {
-            continue;
-        }
-
-        if (dir_entry.dir.DIR_Name[0] == 0x00) {
-            break;
-        }
-
-        wchar_t *result = malloc(PATH_MAX); // concatenate the path
-        wcscat(result, directory_name);
-        wcscat(result, L"\0");
-        names[idx++] = result;
-    }
-
-    for (uint32_t i = 0; i < idx; i++) {
-        wchar_t *short_names[] = {names[i]};
-        union DirEntry entry = get_dir_entry_on_name(hdr, short_names, f, 0, 1);
-        if (!is_valid_dir_entry(&entry)) {
-            perror("Could not locate the exact entry");
-            exit(EXIT_FAILURE);
-        }
-
-        remove_object(hdr, entry, f);
-        free(names[i]);
-    }
+    uint32_t cluster_number = hdr->fat32.BPB_RootClus;
+    uint32_t error_value = get_error_value(hdr);
+    do {
+        remove_objects_one_cluster(hdr, cluster_number, f);
+        cluster_number = get_next_cluster(hdr, cluster_number, f);
+    } while (cluster_number > 0x2 && cluster_number < error_value);
 }

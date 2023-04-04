@@ -17,8 +17,6 @@ uint32_t get_sector_from_cluster(const struct BPB *hdr, uint32_t N, uint32_t fir
 
 void populate_directory_name(union DirEntry *dir_entry, wchar_t *directory_name);
 
-bool isLastLongName(uint8_t ordinal_value);
-
 wchar_t combine_bytes(uint8_t high_byte, uint8_t low_byte);
 
 void list_data_dir_one_cluster(const struct BPB *hdr, uint32_t cluster_number, FILE *f, wchar_t *prefix);
@@ -37,5 +35,7 @@ bool is_excluded_dir(union DirEntry *dir_entry);
 
 void
 get_fat_offset_given_cluster(const struct BPB *hdr, uint32_t cluster_number, uint32_t *fat_entry_bytes, uint32_t *offset);
+
+wchar_t *convert_short_name_wchar(union DirEntry *dir_entry, uint32_t i);
 
 #endif //FAT_LIST_H

@@ -8,10 +8,13 @@
 #include <string.h>
 #include <linux/limits.h>
 #include <wchar.h>
+#include <ctype.h>
 
 #include "list.h"
 #include "common.h"
 #include "inspection.h"
+
+wchar_t *concatenate_path_directory(const wchar_t *prefix, const wchar_t *directory_name);
 
 void list_fat(const char *diskimg_path) {
     off_t size;
@@ -31,6 +34,9 @@ void list_fat(const char *diskimg_path) {
 }
 
 void list_data_dir_one_cluster(const struct BPB *hdr, uint32_t cluster_number, FILE *f, wchar_t *prefix) {
+#ifdef DEBUG
+    wprintf(L"Current cluster number: %ld", cluster_number);
+#endif
     uint32_t sector_number = get_sector_from_cluster(hdr, cluster_number, get_first_data_sector(hdr));
     uint32_t offset = convert_sector_to_byte_offset(hdr, sector_number);
     fseek(f, offset, SEEK_SET);
@@ -65,6 +71,21 @@ void read_dir_helper(const struct BPB *hdr, FILE *f, uint32_t max_total_entries,
         }
 
         if (dir_entry.ldir.LDIR_Attr != ATTR_LONG_NAME) {
+            if (!is_excluded_dir(&dir_entry)) {
+                // there are times when it doesn't have long name
+                wchar_t *temp_pointer = convert_short_name_wchar(&dir_entry, i);
+                wprintf(L"%ls%ls\n", prefix, *temp_pointer);
+
+                if (dir_entry.dir.DIR_Attr == ATTR_DIRECTORY) {
+                    uint32_t directory_cluster = dir_entry.dir.DIR_FstClusLO;
+                    directory_cluster |= (dir_entry.dir.DIR_FstClusHI << 16);
+                    wchar_t *result = concatenate_path_directory(prefix, temp_pointer);
+                    prefixes[idx] = result;
+                    next_entry[idx++] = directory_cluster;
+                } else {
+                    free(temp_pointer);
+                }
+            }
             continue;
         }
 
@@ -77,7 +98,7 @@ void read_dir_helper(const struct BPB *hdr, FILE *f, uint32_t max_total_entries,
             memcpy(&names[name_offset++], &dir_entry, ENTRY_SIZE_BYTES);
         }
 #ifdef DEBUG
-        hexdump(&names[name_offset - 2], 32);
+        hexdump(&names[name_offset - 1], 32);
 #endif
         uint32_t first_offset = name_offset - 2;
         uint8_t ordinal_value = names[first_offset + 1].ldir.LDIR_Ord;
@@ -105,10 +126,7 @@ void read_dir_helper(const struct BPB *hdr, FILE *f, uint32_t max_total_entries,
             uint32_t directory_cluster;
             wprintf(L"%ls%ls/\n", prefix, directory_name);
 
-            wchar_t *result = malloc(PATH_MAX); // concatenate the path
-            wcscpy(result, prefix);
-            wcscat(result, directory_name);
-            wcscat(result, L"/");
+            wchar_t *result = concatenate_path_directory(prefix, directory_name);
 
             directory_cluster = dir_entry.dir.DIR_FstClusLO;
             directory_cluster |= (dir_entry.dir.DIR_FstClusHI << 16);
@@ -123,6 +141,34 @@ void read_dir_helper(const struct BPB *hdr, FILE *f, uint32_t max_total_entries,
         list_data_dir(hdr, next_entry[i], f, prefixes[i]);
         free(prefixes[i]);
     }
+}
+
+wchar_t *concatenate_path_directory(const wchar_t *prefix, const wchar_t *directory_name) {
+    wchar_t *result = malloc(PATH_MAX); // concatenate the path
+    wcscpy(result, prefix);
+    wcscat(result, directory_name);
+    wcscat(result, L"/");
+    return result;
+}
+
+wchar_t *convert_short_name_wchar(union DirEntry *dir_entry, uint32_t i) {
+    uint8_t small_entry[12] = {0};
+    uint32_t small_entry_idx = 0;
+    for (int k = 0; k < 8; k++) {
+        if ((*dir_entry).dir.DIR_Name[i] != 0x20) {
+            small_entry[small_entry_idx++] = tolower((*dir_entry).dir.DIR_Name[k]);
+        }
+    }
+    small_entry[small_entry_idx++] = '.';
+    for (int k = 8; k < 11; k++) {
+        if ((*dir_entry).dir.DIR_Name[i] != 0x20) {
+            small_entry[small_entry_idx++] = tolower((*dir_entry).dir.DIR_Name[k]);
+        }
+    }
+    wchar_t temp[PATH_MAX];
+    mbstowcs(temp, (char *)small_entry, PATH_MAX);
+    wchar_t *temp_pointer = malloc(PATH_MAX);
+    return temp_pointer;
 }
 
 bool is_excluded_dir(union DirEntry *dir_entry) {
@@ -142,8 +188,6 @@ bool is_excluded_dir(union DirEntry *dir_entry) {
 
     return false;
 }
-
-bool isLastLongName(uint8_t ordinal_value) { return (ordinal_value == (LAST_LONG_ENTRY | 1)) || ordinal_value == 1; }
 
 void populate_directory_name(union DirEntry *dir_entry, wchar_t *directory_name) {
     if (dir_entry->dir.DIR_Attr != ATTR_LONG_NAME) {

@@ -191,7 +191,7 @@ union DirEntry get_dir_entry_helper(const struct BPB *hdr, FILE *f, uint32_t max
             ordinal_value = current_names[first_offset].ldir.LDIR_Ord;
         }
 
-        for(uint32_t j = first_offset; j < name_offset - 1; j++) {
+        for (uint32_t j = first_offset; j < name_offset - 1; j++) {
             populate_directory_name(&current_names[j], directory_name);
         }
 
@@ -399,6 +399,10 @@ void root_remove(const struct BPB *hdr, FILE *f) {
          fread(&dir_entry, ENTRY_SIZE_BYTES, 1, f) == 1;
          i++) {
         wchar_t directory_name[PATH_MAX] = {0};
+        union DirEntry current_names[max_total_entries];
+        uint32_t name_offset = 0;
+        memcpy(&current_names[name_offset++], &dir_entry, ENTRY_SIZE_BYTES);
+
         if (dir_entry.dir.DIR_Name[0] == 0) {
             break;
         }
@@ -411,23 +415,24 @@ void root_remove(const struct BPB *hdr, FILE *f) {
             continue;
         }
 
-        populate_directory_name(&dir_entry, directory_name);
-        uint8_t ordinal_value = dir_entry.ldir.LDIR_Ord;
-        while (!isLastLongName(ordinal_value)) {
-            if (fread(&dir_entry, ENTRY_SIZE_BYTES, 1, f) != 1) {
-                perror("fread");
-                exit(EXIT_FAILURE);
-            } // read again
-
-            populate_directory_name(&dir_entry, directory_name);
-            ordinal_value = dir_entry.ldir.LDIR_Ord;
-        }
-
+        // get all the names until short entry
         while (dir_entry.dir.DIR_Attr == ATTR_LONG_NAME) {
             if (fread(&dir_entry, ENTRY_SIZE_BYTES, 1, f) != 1) {
                 perror("fread");
                 exit(EXIT_FAILURE);
             } // read the short entry
+            memcpy(&current_names[name_offset++], &dir_entry, ENTRY_SIZE_BYTES);
+        }
+
+        uint32_t first_offset = name_offset - 2;
+        uint8_t ordinal_value = current_names[first_offset + 1].ldir.LDIR_Ord;
+        while ((ordinal_value & LAST_LONG_ENTRY) != LAST_LONG_ENTRY) {
+            first_offset--;
+            ordinal_value = current_names[first_offset].ldir.LDIR_Ord;
+        }
+
+        for (uint32_t j = first_offset; j < name_offset - 1; j++) {
+            populate_directory_name(&current_names[j], directory_name);
         }
 
         if (is_excluded_dir(&dir_entry) || dir_entry.dir.DIR_Name[0] == 0xe5) {

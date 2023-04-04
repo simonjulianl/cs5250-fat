@@ -21,16 +21,7 @@
 void copy_from_image(const char *diskimg_path, const char *image_path,
                      const char *local_path) {
     // get or open the local file
-    if (access(local_path, F_OK) == 0) {
-        // file exists
-        struct stat path_stat;
-        stat(local_path, &path_stat);
-        bool is_regular_file = S_ISREG(path_stat.st_mode);
-        if (!is_regular_file) { // can open the file but not a regular file
-            perror("local path doesn't point to a regular file");
-            exit(EXIT_FAILURE);
-        }
-    }
+    check_local_path_regular_if_exists(local_path);
 
     FILE *lf = fopen(local_path, "wb");
     if (lf == NULL) {
@@ -40,11 +31,13 @@ void copy_from_image(const char *diskimg_path, const char *image_path,
 
     off_t size;
     uint8_t *image;
-    get_bpb_mmap(diskimg_path, &size, &image);
+    get_disk_image_mmap(diskimg_path, &size, &image);
     const struct BPB *hdr = (const struct BPB *)image;
 
     FILE *f = fopen(diskimg_path, "rb");
     if (f == NULL) {
+        fclose(lf);
+        munmap(image, size);
         perror("fopen");
         exit(EXIT_FAILURE);
     }
@@ -88,8 +81,7 @@ void copy_from_image(const char *diskimg_path, const char *image_path,
         // write each cluster to the file
         fwrite(ptr, size_each_cluster, 1, lf);
 
-        next_cluster = get_next_cluster(hdr, cluster_number, f);
-        cluster_number = next_cluster;
+        cluster_number = get_next_cluster(hdr, cluster_number, f);
     }
 
     for (int i = 0; i < idx_image; i++) {
@@ -99,4 +91,18 @@ void copy_from_image(const char *diskimg_path, const char *image_path,
     free(ptr);
     munmap(image, size);
     fclose(f);
+    fclose(lf);
+}
+
+void check_local_path_regular_if_exists(const char *local_path) {
+    if (access(local_path, F_OK) == 0) {
+        // file exists
+        struct stat path_stat;
+        stat(local_path, &path_stat);
+        bool is_regular_file = S_ISREG(path_stat.st_mode);
+        if (!is_regular_file) { // can open the file but not a regular file
+            perror("local path doesn't point to a regular file");
+            exit(EXIT_FAILURE);
+        }
+    }
 }

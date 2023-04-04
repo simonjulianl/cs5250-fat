@@ -2,10 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "copy_from_image.h"
+#include "copy_from_local.h"
 #include "inspection.h"
 #include "list.h"
 #include "remove.h"
-#include "copy_from_image.h"
 
 #define IMAGE_PREFIX "image:"
 #define LOCAL_PREFIX "local:"
@@ -31,16 +32,24 @@ int main(int argc, char *argv[]) {
         list_fat(diskimg_path);
     } else if (strcmp(op, "rm") == 0) {
         remove_fat(diskimg_path, argv[3]);
-    } else if (strcmp(op, "cp") == 0) {
-        // copy
+    } else if (strcmp(op, "cp") == 0) { // copy
         const char *first_path = argv[3];
         const char *second_path = argv[4];
-        if (starts_with(IMAGE_PREFIX, first_path) && starts_with(LOCAL_PREFIX, second_path)) {
+        if (starts_with(IMAGE_PREFIX, first_path) &&
+            starts_with(LOCAL_PREFIX, second_path)) {
             first_path += strlen(IMAGE_PREFIX);
             second_path += strlen(LOCAL_PREFIX);
             copy_from_image(diskimg_path, first_path, second_path);
+        } else if (starts_with(LOCAL_PREFIX, first_path) &&
+                   starts_with(IMAGE_PREFIX, second_path)) {
+            first_path += strlen(LOCAL_PREFIX);
+            second_path += strlen(IMAGE_PREFIX);
+            copy_from_local(diskimg_path, first_path, second_path);
+        } else {
+            goto error;
         }
     } else {
+    error:
         fprintf(stderr, "Unknown command, please check the usage");
         exit(EXIT_FAILURE);
     }

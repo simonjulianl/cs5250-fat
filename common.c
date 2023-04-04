@@ -11,7 +11,7 @@
 
 #include "common.h"
 
-void get_bpb_mmap(const char *diskimg_path, off_t *size, uint8_t **image) {
+void get_disk_image_mmap(const char *diskimg_path, off_t *size, uint8_t **image) {
     int fd = open(diskimg_path, O_RDONLY);
     if (fd < 0) {
         perror("open");

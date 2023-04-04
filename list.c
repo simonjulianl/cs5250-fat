@@ -20,7 +20,7 @@ wchar_t *concatenate_path_directory(const wchar_t *prefix,
 void list_fat(const char *diskimg_path) {
     off_t size;
     uint8_t *image;
-    get_bpb_mmap(diskimg_path, &size, &image);
+    get_disk_image_mmap(diskimg_path, &size, &image);
     const struct BPB *hdr = (const struct BPB *)image;
 
     FILE *f = fopen(diskimg_path, "rb");

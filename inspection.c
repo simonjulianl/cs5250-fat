@@ -76,7 +76,7 @@ uint32_t get_first_data_sector(const struct BPB *hdr) {
 void inspect_fat(const char *diskimg_path) {
     off_t size;
     uint8_t *image;
-    get_bpb_mmap(diskimg_path, &size, &image);
+    get_disk_image_mmap(diskimg_path, &size, &image);
 
     /*
      * Print some information about the disk image.

@@ -138,6 +138,10 @@ union DirEntry get_dir_entry_helper(const struct BPB *hdr, FILE *f, uint32_t max
          fread(&dir_entry, ENTRY_SIZE_BYTES, 1, f) == 1;
          i++) {
         wchar_t directory_name[PATH_MAX] = {0};
+        union DirEntry current_names[max_total_entries];
+        uint32_t name_offset = 0;
+        memcpy(&current_names[name_offset++], &dir_entry, ENTRY_SIZE_BYTES);
+
         if (dir_entry.dir.DIR_Name[0] == 0) {
             return createNullDirEntry();
         }
@@ -171,32 +175,24 @@ union DirEntry get_dir_entry_helper(const struct BPB *hdr, FILE *f, uint32_t max
             }
         }
 
-        populate_directory_name(&dir_entry, directory_name);
-        uint8_t ordinal_value = dir_entry.ldir.LDIR_Ord;
-        while (!isLastLongName(ordinal_value)) {
-            if (fread(&dir_entry, ENTRY_SIZE_BYTES, 1, f) != 1) {
-                perror("fread");
-                exit(EXIT_FAILURE);
-            } // read again
-
-            populate_directory_name(&dir_entry, directory_name);
-            ordinal_value = dir_entry.ldir.LDIR_Ord;
-        }
-
-        /**
-         * 00000000  41 74 00 65 00 73 00 74  00 69 00 0f 00 f6 6e 00  |At.e.s.t.i....n.|
-         * 00000010  67 00 2e 00 70 00 64 00  66 00 00 00 00 00 ff ff  |g...p.d.f.......|
-         * 00000020  41 74 00 65 00 73 00 74  00 69 00 0f 00 f6 6e 00  |At.e.s.t.i....n.|
-         * 00000030  67 00 2e 00 70 00 64 00  66 00 00 00 00 00 ff ff  |g...p.d.f.......|
-         *
-         * most likely the second one is long name directory entry set, but it's not explained well in the docs
-         */
-
+        // get all the names until short entry
         while (dir_entry.dir.DIR_Attr == ATTR_LONG_NAME) {
             if (fread(&dir_entry, ENTRY_SIZE_BYTES, 1, f) != 1) {
                 perror("fread");
                 exit(EXIT_FAILURE);
             } // read the short entry
+            memcpy(&current_names[name_offset++], &dir_entry, ENTRY_SIZE_BYTES);
+        }
+
+        uint32_t first_offset = name_offset - 2;
+        uint8_t ordinal_value = current_names[first_offset + 1].ldir.LDIR_Ord;
+        while ((ordinal_value & LAST_LONG_ENTRY) != LAST_LONG_ENTRY) {
+            first_offset--;
+            ordinal_value = current_names[first_offset].ldir.LDIR_Ord;
+        }
+
+        for(uint32_t j = first_offset; j < name_offset - 1; j++) {
+            populate_directory_name(&current_names[j], directory_name);
         }
 
         uint32_t directory_cluster = get_associated_cluster(&dir_entry);

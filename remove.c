@@ -224,8 +224,8 @@ union DirEntry get_dir_entry_helper(const struct BPB *hdr, FILE *f, uint32_t max
 }
 
 union DirEntry embed_offset(FILE *f, union DirEntry *dir_entry) {
-    uint32_t offset = ftell(f) - ENTRY_SIZE_BYTES;
-    (*dir_entry).dir.DIR_FileSize = offset;
+    uint64_t offset = ftell(f) - ENTRY_SIZE_BYTES;
+    (*dir_entry).dir.OFFSET = offset;
     return (*dir_entry);
 }
 
@@ -263,12 +263,24 @@ remove_fat_entry(const struct BPB *hdr, FILE *f, uint32_t cluster_number, uint32
                  uint32_t *entry) {
     // just found out only need to support FAT32
     // preserve the top 4 bits
-    get_offset_given_cluster(hdr, cluster_number, fat_entry_bytes, offset);
-    fseek(f, (*offset), SEEK_SET);
-    fread(entry, (*fat_entry_bytes), 1, f);
-    (*entry) &= 0xF0000000;
-    fseek(f, (*offset), SEEK_SET);
-    fwrite(entry, (*fat_entry_bytes), 1, f);
+    for (int i = 0; i < hdr->BPB_NumFATs; i++) {
+        uint32_t multiplier;
+        if (i == 0) {
+            multiplier = 0;
+        } else {
+            multiplier = i + 1;
+        }
+
+        get_fat_offset_given_cluster(hdr, cluster_number, fat_entry_bytes, offset);
+        uint32_t fat_table_copy_offset = hdr->fat32.BPB_FATSz32 * multiplier + (*offset);
+        fseek(f, fat_table_copy_offset, SEEK_SET);
+        fread(entry, (*fat_entry_bytes), 1, f);
+        (*entry) &= 0xF0000000;
+        fseek(f, fat_table_copy_offset, SEEK_SET);
+        fwrite(entry, (*fat_entry_bytes), 1, f);
+    }
+
+    // TODO: update FS Info (optional)
 }
 
 uint32_t get_error_value(const struct BPB *hdr) {
@@ -304,14 +316,14 @@ void remove_file(const struct BPB *hdr, union DirEntry file_entry, FILE *f) {
 }
 
 void mark_entry_unused(union DirEntry *file_entry, FILE *f) {
-    uint32_t dir_offset = (*file_entry).dir.DIR_FileSize;
+    uint64_t dir_offset = (*file_entry).dir.OFFSET;
     uint8_t removed_byte = 0xE5;
-    fseek(f, dir_offset, SEEK_SET);
+    fseek(f, (long) dir_offset, SEEK_SET);
     fwrite(&removed_byte, 1, 1, f);
 
 #ifdef DEBUG
     uint32_t *entry = malloc(32);
-    fseek(f, dir_offset, SEEK_SET);
+    fseek(f, (long) dir_offset, SEEK_SET);
     fread(entry, 32, 1, f);
     hexdump(entry, 32);
 #endif

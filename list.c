@@ -53,6 +53,9 @@ void read_dir_helper(const struct BPB *hdr, FILE *f, uint32_t max_total_entries,
          fread(&dir_entry, ENTRY_SIZE_BYTES, 1, f) == 1;
          i++) {
         wchar_t directory_name[PATH_MAX] = {0};
+        union DirEntry names[max_total_entries];
+        uint32_t name_offset = 0;
+        memcpy(&names[name_offset++], &dir_entry, ENTRY_SIZE_BYTES);
         if (dir_entry.dir.DIR_Name[0] == 0) {
             break;
         }
@@ -65,24 +68,29 @@ void read_dir_helper(const struct BPB *hdr, FILE *f, uint32_t max_total_entries,
             continue;
         }
 
-        populate_directory_name(&dir_entry, directory_name);
-        uint8_t ordinal_value = dir_entry.ldir.LDIR_Ord;
-        while (!isLastLongName(ordinal_value)) {
-            if (fread(&dir_entry, ENTRY_SIZE_BYTES, 1, f) != 1) {
-                perror("fread");
-                exit(EXIT_FAILURE);
-            } // read again
-
-            populate_directory_name(&dir_entry, directory_name);
-            ordinal_value = dir_entry.ldir.LDIR_Ord;
-        }
-
-        // avoid long name directory entry set
+        // get all the names until short entry
         while (dir_entry.dir.DIR_Attr == ATTR_LONG_NAME) {
             if (fread(&dir_entry, ENTRY_SIZE_BYTES, 1, f) != 1) {
                 perror("fread");
                 exit(EXIT_FAILURE);
             } // read the short entry
+            memcpy(&names[name_offset++], &dir_entry, ENTRY_SIZE_BYTES);
+        }
+#ifdef DEBUG
+        hexdump(&names[name_offset - 2], 32);
+#endif
+        uint32_t first_offset = name_offset - 2;
+        uint8_t ordinal_value = names[first_offset + 1].ldir.LDIR_Ord;
+        while ((ordinal_value & LAST_LONG_ENTRY) != LAST_LONG_ENTRY) {
+            first_offset--;
+            ordinal_value = names[first_offset].ldir.LDIR_Ord;
+        }
+
+#ifdef DEBUG
+        hexdump(&names[first_offset], 32);
+#endif
+        for(uint32_t j = first_offset; j < name_offset - 1; j++) {
+            populate_directory_name(&names[j], directory_name);
         }
 
         if (is_excluded_dir(&dir_entry) || dir_entry.dir.DIR_Name[0] == 0xe5) {
@@ -138,6 +146,9 @@ bool is_excluded_dir(union DirEntry *dir_entry) {
 bool isLastLongName(uint8_t ordinal_value) { return (ordinal_value == (LAST_LONG_ENTRY | 1)) || ordinal_value == 1; }
 
 void populate_directory_name(union DirEntry *dir_entry, wchar_t *directory_name) {
+    if (dir_entry->dir.DIR_Attr != ATTR_LONG_NAME) {
+        return;
+    }
     uint8_t ordinal_value = (*dir_entry).ldir.LDIR_Ord;
     uint32_t array_offset = (ordinal_value & 0x3F) - 1;
     array_offset *= 13;
@@ -178,7 +189,7 @@ uint32_t get_next_cluster(const struct BPB *hdr, uint32_t cluster_number, FILE *
     uint32_t fat_entry_bytes;
     uint32_t entry;
     uint32_t offset;
-    get_offset_given_cluster(hdr, cluster_number, &fat_entry_bytes, &offset);
+    get_fat_offset_given_cluster(hdr, cluster_number, &fat_entry_bytes, &offset);
 
     fseek(f, offset, SEEK_SET);
     fread(&entry, fat_entry_bytes, 1, f);
@@ -199,7 +210,8 @@ uint32_t get_next_cluster(const struct BPB *hdr, uint32_t cluster_number, FILE *
 }
 
 void
-get_offset_given_cluster(const struct BPB *hdr, uint32_t cluster_number, uint32_t *fat_entry_bytes, uint32_t *offset) {
+get_fat_offset_given_cluster(const struct BPB *hdr, uint32_t cluster_number, uint32_t *fat_entry_bytes,
+                             uint32_t *offset) {
     uint32_t fat_offset;
     switch (get_fat_version(hdr)) {
         case 32:

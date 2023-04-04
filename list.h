@@ -36,6 +36,6 @@ void read_dir_helper(const struct BPB *hdr, FILE *f, uint32_t max_total_entries,
 bool is_excluded_dir(union DirEntry *dir_entry);
 
 void
-get_offset_given_cluster(const struct BPB *hdr, uint32_t cluster_number, uint32_t *fat_entry_bytes, uint32_t *offset);
+get_fat_offset_given_cluster(const struct BPB *hdr, uint32_t cluster_number, uint32_t *fat_entry_bytes, uint32_t *offset);
 
 #endif //FAT_LIST_H

@@ -6,7 +6,6 @@
 #include "list.h"
 #include "remove.h"
 
-
 int main(int argc, char *argv[]) {
     setbuf(stdout, NULL);
     if (argc < 3) {
@@ -25,4 +24,3 @@ int main(int argc, char *argv[]) {
     } else {
     }
 }
-

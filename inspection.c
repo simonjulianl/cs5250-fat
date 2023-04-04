@@ -5,9 +5,8 @@
 #include <sys/mman.h>
 #include <wchar.h>
 
-#include "inspection.h"
 #include "common.h"
-
+#include "inspection.h"
 
 /*
  * Check if the given disk image is a FAT32 disk image.
@@ -16,7 +15,8 @@
 uint32_t get_fat_version(const struct BPB *hdr) {
     /*
      * Manual 3.5: Determination of FAT type when mounting the volume
-     * The FAT type is determined solely by the count of clusters on the volume (CountOfClusters).
+     * The FAT type is determined solely by the count of clusters on the volume
+     * (CountOfClusters).
      */
     uint32_t root_dir_sectors = get_root_dir_sectors(hdr);
     uint32_t fat_size, data_sectors, count_of_clusters;
@@ -33,10 +33,13 @@ uint32_t get_fat_version(const struct BPB *hdr) {
     }
 }
 
-uint32_t get_data_sectors(const struct BPB *hdr, uint32_t root_dir_sectors, uint32_t fat_size) {
+uint32_t get_data_sectors(const struct BPB *hdr, uint32_t root_dir_sectors,
+                          uint32_t fat_size) {
     uint32_t data_sectors, total_sectors;
     total_sectors = get_total_sectors(hdr);
-    data_sectors = total_sectors - (hdr->BPB_RsvdSecCnt + hdr->BPB_NumFATs * fat_size) + root_dir_sectors;
+    data_sectors = total_sectors -
+                   (hdr->BPB_RsvdSecCnt + hdr->BPB_NumFATs * fat_size) +
+                   root_dir_sectors;
     return data_sectors;
 }
 
@@ -51,7 +54,8 @@ uint32_t get_total_sectors(const struct BPB *hdr) {
 }
 
 uint32_t get_root_dir_sectors(const struct BPB *hdr) {
-    return ((hdr->BPB_RootEntCnt * 32) + (hdr->BPB_BytsPerSec - 1)) / hdr->BPB_BytsPerSec;
+    return ((hdr->BPB_RootEntCnt * 32) + (hdr->BPB_BytsPerSec - 1)) /
+           hdr->BPB_BytsPerSec;
 }
 
 uint32_t get_fat_sector_size(const struct BPB *hdr) {
@@ -77,7 +81,7 @@ void inspect_fat(const char *diskimg_path) {
     /*
      * Print some information about the disk image.
      */
-    const struct BPB *hdr = (const struct BPB *) image;
+    const struct BPB *hdr = (const struct BPB *)image;
     uint32_t fat_size = get_fat_sector_size(hdr);
     uint32_t root_dir_sectors = get_root_dir_sectors(hdr);
 
@@ -87,8 +91,8 @@ void inspect_fat(const char *diskimg_path) {
     wprintf(L"RsvdSecCnt = %u\n", hdr->BPB_RsvdSecCnt);
     wprintf(L"FATsSecCnt = %u\n", hdr->BPB_NumFATs * fat_size);
     wprintf(L"RootSecCnt = %u\n", root_dir_sectors);
-    wprintf(L"DataSecCnt = %u\n", get_data_sectors(hdr, root_dir_sectors, fat_size));
+    wprintf(L"DataSecCnt = %u\n",
+            get_data_sectors(hdr, root_dir_sectors, fat_size));
 
     munmap(image, size);
 }
-

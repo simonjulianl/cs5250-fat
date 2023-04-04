@@ -96,7 +96,8 @@ union DirEntry {
         uint16_t DIR_WrtDate;     /* offset 24 */
         uint16_t DIR_FstClusLO;   /* offset 26 */
         uint32_t DIR_FileSize;    /* offset 28 */
-        uint64_t OFFSET;          /* offset 32 extra stuff for assignment, don't write this*/
+        uint64_t
+            OFFSET; /* offset 32 extra stuff for assignment, don't write this*/
     } __attribute__((packed)) dir;
     // Long File Name Implementation (RTFM: Section 7)
     struct {

@@ -15,10 +15,11 @@ uint32_t get_fat_sector_size(const struct BPB *hdr);
 
 uint32_t get_root_dir_sectors(const struct BPB *hdr);
 
-uint32_t get_data_sectors(const struct BPB *hdr, uint32_t root_dir_sectors, uint32_t fat_size);
+uint32_t get_data_sectors(const struct BPB *hdr, uint32_t root_dir_sectors,
+                          uint32_t fat_size);
 
 uint32_t get_total_sectors(const struct BPB *hdr);
 
 uint32_t get_first_data_sector(const struct BPB *hdr);
 
-#endif //FAT_INSPECTION_H
+#endif // FAT_INSPECTION_H

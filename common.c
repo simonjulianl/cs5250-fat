@@ -25,6 +25,7 @@ void get_bpb_mmap(const char *diskimg_path, off_t *size, uint8_t **image) {
     }
     (*image) = mmap(NULL, *size, PROT_READ, MAP_PRIVATE, fd, 0);
     if ((*image) == (void *)-1) {
+        close(fd);
         perror("mmap");
         exit(1);
     }

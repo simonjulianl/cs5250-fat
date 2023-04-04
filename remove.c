@@ -15,45 +15,6 @@
 #include "list.h"
 #include "remove.h"
 
-union DirEntry get_dir_entry_helper(const struct BPB *hdr, FILE *f,
-                                    uint32_t max_total_entries,
-                                    wchar_t *names[], uint32_t current_index,
-                                    uint32_t size);
-
-union DirEntry get_data_dir_one_cluster(const struct BPB *hdr,
-                                        uint32_t cluster_number, FILE *f,
-                                        wchar_t *names[],
-                                        uint32_t current_index, uint32_t size);
-
-uint32_t get_associated_cluster(union DirEntry *dir_entry);
-
-union DirEntry get_dir_entry_on_name(const struct BPB *hdr, wchar_t *names[],
-                                     FILE *f, uint32_t current_index,
-                                     uint32_t size);
-
-bool is_valid_dir_entry(union DirEntry *result);
-
-union DirEntry createNullDirEntry();
-
-uint32_t get_error_value(const struct BPB *hdr);
-
-void remove_file(const struct BPB *hdr, union DirEntry file_entry, FILE *f);
-
-void remove_fat_entry(const struct BPB *hdr, FILE *f, uint32_t cluster_number,
-                      uint32_t *offset, uint32_t *fat_entry_bytes,
-                      uint32_t *entry);
-
-union DirEntry embed_offset(FILE *f, union DirEntry *dir_entry);
-
-void mark_entry_unused(union DirEntry *file_entry, FILE *f);
-
-void remove_object(const struct BPB *hdr, union DirEntry dir_entry, FILE *f);
-
-void remove_objects_one_cluster(const struct BPB *hdr, uint32_t cluster_number,
-                                FILE *f);
-
-void root_remove(const struct BPB *hdr, FILE *f);
-
 int remove_fat(const char *diskimg_path, const char *path) {
     if (path != NULL && path[0] != '/') {
         perror("Invalid absolute path");
@@ -67,6 +28,7 @@ int remove_fat(const char *diskimg_path, const char *path) {
 
     FILE *f = fopen(diskimg_path, "rb+");
     if (f == NULL) {
+        munmap(image, size);
         perror("fopen");
         exit(EXIT_FAILURE);
     }
@@ -77,21 +39,13 @@ int remove_fat(const char *diskimg_path, const char *path) {
     }
 
     if (!is_root) {
-        char *token = strtok((char *)path, "/");
-        int idx = 0;
         wchar_t *name[PATH_MAX];
-
-        while (token != NULL) {
-            wchar_t temp[PATH_MAX];
-            mbstowcs(temp, token, PATH_MAX);
-            wchar_t *temp_pointer = malloc(PATH_MAX);
-            wcpcpy(temp_pointer, temp);
-            name[idx++] = temp_pointer;
-            token = strtok(NULL, "/");
-        }
+        int idx = parse_path(path, name);
 
         union DirEntry dir_entry = get_dir_entry_on_name(hdr, name, f, 0, idx);
         if (!is_valid_dir_entry(&dir_entry)) {
+            fclose(f);
+            munmap(image, size);
             perror("Could not locate the exact entry");
             exit(EXIT_FAILURE);
         }
@@ -107,6 +61,21 @@ int remove_fat(const char *diskimg_path, const char *path) {
     fclose(f);
     munmap(image, size);
     return 0;
+}
+
+int parse_path(const char *path, wchar_t **name) {
+    char *token = strtok((char *)path, "/");
+    int idx = 0;
+
+    while (token != NULL) {
+        wchar_t temp[PATH_MAX];
+        mbstowcs(temp, token, PATH_MAX);
+        wchar_t *temp_pointer = malloc(PATH_MAX);
+        wcpcpy(temp_pointer, temp);
+        name[idx++] = temp_pointer;
+        token = strtok(NULL, "/");
+    }
+    return idx;
 }
 
 union DirEntry get_data_dir(const struct BPB *hdr, uint32_t cluster_number,

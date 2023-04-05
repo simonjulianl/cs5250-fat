@@ -16,10 +16,7 @@
 #include "remove.h"
 
 int remove_fat(const char *diskimg_path, const char *path) {
-    if (path != NULL && path[0] != '/') {
-        perror("Invalid absolute path");
-        exit(EXIT_FAILURE);
-    }
+    check_absolute_path(path);
 
     off_t size;
     uint8_t *image;
@@ -61,6 +58,12 @@ int remove_fat(const char *diskimg_path, const char *path) {
     fclose(f);
     munmap(image, size);
     return 0;
+}
+void check_absolute_path(const char *path) {
+    if (path != NULL && path[0] != '/') {
+        perror("Invalid absolute path");
+        exit(EXIT_FAILURE);
+    }
 }
 
 int parse_path(const char *path, wchar_t **name) {

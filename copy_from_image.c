@@ -20,6 +20,7 @@
 
 void copy_from_image(const char *diskimg_path, const char *image_path,
                      const char *local_path) {
+    check_absolute_path(image_path);
     // get or open the local file
     check_local_path_regular_if_exists(local_path);
 

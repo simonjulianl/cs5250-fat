@@ -7,6 +7,8 @@
 
 #include <stdbool.h>
 
+void check_absolute_path(const char *path);
+
 int remove_fat(const char *diskimg_path, const char *path);
 
 union DirEntry get_dir_entry_helper(const struct BPB *hdr, FILE *f,

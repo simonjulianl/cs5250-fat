@@ -49,6 +49,7 @@ bool is_valid_long_filename_char(char c);
 uint32_t get_single_free_fat_entry(const struct BPB *hdr, FILE *f);
 void copy_from_local(const char *diskimg_path, const char *local_path,
                      const char *image_path) {
+    check_absolute_path(image_path);
     // get or open the lo
     check_local_path_regular_if_exists(local_path);
 

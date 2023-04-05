@@ -46,6 +46,7 @@ void update_dir_entry_size(FILE *f, const union DirEntry *file_entry,
 
 bool is_valid_long_filename_char(char c);
 
+uint32_t get_single_free_fat_entry(const struct BPB *hdr, FILE *f);
 void copy_from_local(const char *diskimg_path, const char *local_path,
                      const char *image_path) {
     // get or open the lo
@@ -160,6 +161,12 @@ void copy_from_local(const char *diskimg_path, const char *local_path,
         uint32_t total_entries_required =
             long_entry_required + 1; // account for short entry
 
+        if (total_entries_required > get_entries_per_cluster(hdr)) {
+            perror("Cannot store the long filename and short file in a "
+                   "consecutive cluster");
+            exit(EXIT_FAILURE);
+        }
+
         uint32_t checksum =
             generate_long_name_checksum((unsigned char *)short_filename);
 
@@ -223,11 +230,106 @@ void copy_from_local(const char *diskimg_path, const char *local_path,
         hexdump(long_dirs + 1, 32);
         wprintf(L"%s", short_filename);
 #endif
-        // TODO: create the long file name entry and put it in the
-        // the directory if it exists, otherwise returns error
+
+        /*
+         * A really simple way to assign a new file is just by allocating
+         * a new cluster, and put the file there (not the best for space
+         * utilization), obviously can be improved
+         */
+
+        // get a free cluster
+        uint32_t extra_fat_entry = get_single_free_fat_entry(hdr, f);
+        if (extra_fat_entry == 0) {
+            perror("No more cluster available");
+            exit(EXIT_FAILURE);
+        }
+
+        // write the dir entry into the new cluster
+        uint32_t sector_number = get_data_sector_from_cluster(
+            hdr, extra_fat_entry, get_first_data_sector(hdr));
+
+        for (int i = long_entry_required - 1, j = 0; i > -1; i--, j++) {
+            union DirEntry current_long_entry = long_dirs[i];
+            fseek(f, sector_number * hdr->BPB_BytsPerSec + j * ENTRY_SIZE_BYTES,
+                  SEEK_SET);
+            fwrite(&current_long_entry, ENTRY_SIZE_BYTES, 1, f);
+        }
+
+        // write the dirs
+        fseek(f,
+              sector_number * hdr->BPB_BytsPerSec +
+                  long_entry_required * ENTRY_SIZE_BYTES,
+              SEEK_SET);
+        fwrite(&short_dir, ENTRY_SIZE_BYTES, 1, f);
+
+        uint32_t cluster_number, prev_cluster_number = 0,
+                                 error_value = get_error_value(hdr);
+
+        for (cluster_number = dir_cluster_number;
+             cluster_number >= 0x2 && cluster_number < error_value;) {
+            prev_cluster_number = cluster_number;
+            cluster_number = get_next_cluster(hdr, cluster_number, f);
+        }
+
+        // update the FAT entry
+        for (int i = 0; i < hdr->BPB_NumFATs; i++) {
+            uint32_t fat_entry_bytes;
+            uint32_t offset, entry;
+            get_fat_offset_given_cluster(hdr, prev_cluster_number,
+                                         &fat_entry_bytes, &offset);
+            fseek(f, offset, SEEK_SET);
+            fread(&entry, 4, 1, f);
+            entry &= 0xF0000000;
+            entry |= extra_fat_entry;
+            fseek(f, offset, SEEK_SET);
+            fwrite(&entry, 4, 1, f);
+
+            // set the new entry of the fat to be EOF
+            get_fat_offset_given_cluster(hdr, extra_fat_entry, &fat_entry_bytes,
+                                         &offset);
+            fseek(f, offset, SEEK_SET);
+            fread(&entry, 4, 1, f);
+            entry &= 0xF0000000;
+            entry |= 0x0FFFFFFF;
+            fseek(f, offset, SEEK_SET);
+            fwrite(&entry, 4, 1, f);
+        }
+
+        // try to insert again
+        dir_entry =
+            get_dir_entry_on_name(hdr, image_path_names, f, 0, idx_image);
+
+        mark_fat_file_as_free(hdr, f, &dir_entry);
+        dir_entry =
+            get_dir_entry_on_name(hdr, image_path_names, f, 0, idx_image);
+
+#ifdef DEBUG
+        hexdump(&dir_entry, 32);
+#endif
+
+        write_local_to_image(lf, hdr, f, &dir_entry);
     }
 
     clear_up_resources(lf, size, image, f, image_path_names, idx_image);
+}
+
+uint32_t get_single_free_fat_entry(const struct BPB *hdr, FILE *f) {
+    uint32_t fat_starting_offset = hdr->BPB_BytsPerSec * hdr->BPB_RsvdSecCnt;
+
+    // end of cluster can be indicated using OR mask 0x0FFFFFFF
+    uint32_t total_entry_fat = hdr->fat32.BPB_FATSz32 * hdr->BPB_BytsPerSec / 4;
+
+    for (uint32_t i = hdr->fat32.BPB_RootClus + 1; i < total_entry_fat; i++) {
+        uint32_t fat_entry;
+        fseek(f, fat_starting_offset + i * 4, SEEK_SET);
+        fread(&fat_entry, 4, 1, f);
+
+        if ((fat_entry & 0x0FFFFFFF) == 0x00000000) {
+            return i;
+        }
+    }
+
+    return 0;
 }
 
 void create_short_filename(const char *filename, char *short_filename) {
@@ -327,19 +429,17 @@ void write_local_to_image(FILE *lf, const struct BPB *hdr, FILE *f,
 
     // end of cluster can be indicated using OR mask 0x0FFFFFFF
     uint32_t counter = 0;
-    uint32_t total_entry_fat =
-        hdr->fat32.BPB_FATSz32 * hdr->BPB_BytsPerSec / ENTRY_SIZE_BYTES;
+    uint32_t total_entry_fat = hdr->fat32.BPB_FATSz32 * hdr->BPB_BytsPerSec / 4;
 
     for (uint32_t i = hdr->fat32.BPB_RootClus + 1;
          counter < cluster_required && i < total_entry_fat; i++) {
         // seek the cluster
-        uint32_t *fat_entry = malloc(32);
-        fseek(f, fat_starting_offset + i * ENTRY_SIZE_BYTES, SEEK_SET);
-        fread(fat_entry, ENTRY_SIZE_BYTES, 1, f);
-        if ((*fat_entry & 0x0FFFFFFF) == 0x00000000) {
+        uint32_t fat_entry;
+        fseek(f, fat_starting_offset + i * 4, SEEK_SET);
+        fread(&fat_entry, 4, 1, f);
+        if ((fat_entry & 0x0FFFFFFF) == 0x00000000) {
             fat_entries[counter++] = i; // ith fat entry
         }
-        free(fat_entry);
     }
 
     if (counter < cluster_required) {
@@ -360,9 +460,9 @@ void write_local_to_image(FILE *lf, const struct BPB *hdr, FILE *f,
         // write to the cluster
         uint32_t next_cluster_index = current_cluster_index + 1;
         uint32_t fat_offset_bytes = fat_entries[current_cluster_index] * 4;
-        uint32_t sector =
-            get_sector_from_cluster(hdr, fat_entries[current_cluster_index],
-                                    get_first_data_sector(hdr));
+        uint32_t sector = get_data_sector_from_cluster(
+            hdr, fat_entries[current_cluster_index],
+            get_first_data_sector(hdr));
         uint32_t sector_offset = sector * hdr->BPB_BytsPerSec;
 
         fseek(f, sector_offset, SEEK_SET);
@@ -411,7 +511,7 @@ void mark_fat_file_as_free(const struct BPB *hdr, FILE *f,
     uint32_t cluster_number, offset, fat_entry_bytes;
     uint32_t entry, next_cluster;
     for (cluster_number = get_associated_cluster(file_entry);
-         cluster_number > 0x2 && cluster_number < error_value;) {
+         cluster_number >= 0x2 && cluster_number < error_value;) {
         next_cluster = get_next_cluster(hdr, cluster_number, f);
         remove_fat_entry(hdr, f, cluster_number, &offset, &fat_entry_bytes,
                          &entry);
@@ -447,7 +547,7 @@ bool is_valid_short_filename_char(char c) {
         (c >= '0' && c <= '9') || c == '$' || c == '%' || c == '\'' ||
         c == '-' || c == '_' || c == '@' || c == '~' || c == '`' || c == '!' ||
         c == '(' || c == ')' || c == '{' || c == '}' || c == '^' || c == '#' ||
-        c == '&') {
+        c == '&' || c == ' ') {
         return true;
     }
     return false;

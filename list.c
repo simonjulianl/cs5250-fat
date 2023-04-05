@@ -39,7 +39,7 @@ void list_data_dir_one_cluster(const struct BPB *hdr, uint32_t cluster_number,
 #ifdef DEBUG
     wprintf(L"Current cluster number: %ld", cluster_number);
 #endif
-    uint32_t sector_number = get_sector_from_cluster(
+    uint32_t sector_number = get_data_sector_from_cluster(
         hdr, cluster_number, get_first_data_sector(hdr));
     uint32_t offset = convert_sector_to_byte_offset(hdr, sector_number);
     fseek(f, offset, SEEK_SET);
@@ -232,7 +232,7 @@ void populate_directory_name(union DirEntry *dir_entry,
     }
 }
 
-uint32_t get_sector_from_cluster(const struct BPB *hdr, uint32_t N,
+uint32_t get_data_sector_from_cluster(const struct BPB *hdr, uint32_t N,
                                  uint32_t first_data_sector) {
     return (N - 2) * (hdr->BPB_SecPerClus) + first_data_sector;
 }
@@ -320,7 +320,7 @@ void list_data_dir(const struct BPB *hdr, uint32_t cluster_number, FILE *f,
 #ifdef DEBUG
         wprintf(L"Current cluster: %X", cluster_number);
 #endif
-    } while (cluster_number > 0x2 && cluster_number < error_value);
+    } while (cluster_number >= 0x2 && cluster_number < error_value);
 }
 
 void list_root_dir(const struct BPB *hdr, FILE *f) {

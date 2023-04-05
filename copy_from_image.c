@@ -65,15 +65,15 @@ void copy_from_image(const char *diskimg_path, const char *image_path,
 
     uint32_t error_value = get_error_value(hdr);
     uint32_t size_each_cluster = hdr->BPB_SecPerClus * hdr->BPB_BytsPerSec;
-    uint32_t next_cluster, sector_number, offset;
+    uint32_t sector_number, offset;
     void *ptr = malloc(size_each_cluster);
 
     // iterating through all the clusters
     for (uint32_t cluster_number = get_associated_cluster(&dir_entry);
-         cluster_number > 0x2 && cluster_number < error_value;) {
+         cluster_number >= 0x2 && cluster_number < error_value;) {
         // get the current cluster
-        sector_number = get_sector_from_cluster(hdr, cluster_number,
-                                                get_first_data_sector(hdr));
+        sector_number = get_data_sector_from_cluster(
+            hdr, cluster_number, get_first_data_sector(hdr));
         offset = convert_sector_to_byte_offset(hdr, sector_number);
         fseek(f, offset, SEEK_SET);
         fread(ptr, size_each_cluster, 1, f);

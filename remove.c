@@ -90,7 +90,7 @@ union DirEntry get_data_dir(const struct BPB *hdr, uint32_t cluster_number,
             return result;
         }
         cluster_number = get_next_cluster(hdr, cluster_number, f);
-    } while (cluster_number > 0x2 && cluster_number < error_value);
+    } while (cluster_number >= 0x2 && cluster_number < error_value);
 
     return createNullDirEntry();
 }
@@ -247,7 +247,7 @@ union DirEntry get_data_dir_one_cluster(const struct BPB *hdr,
                                         uint32_t cluster_number, FILE *f,
                                         wchar_t *names[],
                                         uint32_t current_index, uint32_t size) {
-    uint32_t sector_number = get_sector_from_cluster(
+    uint32_t sector_number = get_data_sector_from_cluster(
         hdr, cluster_number, get_first_data_sector(hdr));
     uint32_t offset = convert_sector_to_byte_offset(hdr, sector_number);
     fseek(f, offset, SEEK_SET);
@@ -315,7 +315,7 @@ void remove_file(const struct BPB *hdr, union DirEntry file_entry, FILE *f) {
     uint32_t cluster_number, offset, fat_entry_bytes;
     uint32_t entry, next_cluster;
     for (cluster_number = get_associated_cluster(&file_entry);
-         cluster_number > 0x2 && cluster_number < error_value;) {
+         cluster_number >= 0x2 && cluster_number < error_value;) {
         next_cluster = get_next_cluster(hdr, cluster_number, f);
         remove_fat_entry(hdr, f, cluster_number, &offset, &fat_entry_bytes,
                          &entry);
@@ -352,7 +352,7 @@ void remove_object(const struct BPB *hdr, union DirEntry dir_entry, FILE *f) {
         do {
             remove_objects_one_cluster(hdr, cluster_number, f);
             cluster_number = get_next_cluster(hdr, cluster_number, f);
-        } while (cluster_number > 0x2 && cluster_number < error_value);
+        } while (cluster_number >= 0x2 && cluster_number < error_value);
 
         // remove the directory itself
         mark_entry_unused(&dir_entry, f);
@@ -370,7 +370,7 @@ void remove_objects_one_cluster(const struct BPB *hdr, uint32_t cluster_number,
     union DirEntry to_be_removed[max_total_entries];
     uint32_t idx = 0;
 
-    uint32_t sector_number = get_sector_from_cluster(
+    uint32_t sector_number = get_data_sector_from_cluster(
         hdr, cluster_number, get_first_data_sector(hdr));
     uint32_t offset = convert_sector_to_byte_offset(hdr, sector_number);
     fseek(f, offset, SEEK_SET);
@@ -411,5 +411,5 @@ void root_remove(const struct BPB *hdr, FILE *f) {
     do {
         remove_objects_one_cluster(hdr, cluster_number, f);
         cluster_number = get_next_cluster(hdr, cluster_number, f);
-    } while (cluster_number > 0x2 && cluster_number < error_value);
+    } while (cluster_number >= 0x2 && cluster_number < error_value);
 }

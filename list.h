@@ -14,7 +14,7 @@
 void list_fat(const char *diskimg_path);
 
 uint32_t get_data_sector_from_cluster(const struct BPB *hdr, uint32_t N,
-                                 uint32_t first_data_sector);
+                                      uint32_t first_data_sector);
 
 void populate_directory_name(union DirEntry *dir_entry,
                              wchar_t *directory_name);

@@ -77,7 +77,7 @@ void read_dir_helper(const struct BPB *hdr, FILE *f, uint32_t max_total_entries,
 
         if (dir_entry.ldir.LDIR_Attr != ATTR_LONG_NAME) {
             if (!is_excluded_dir(&dir_entry)) {
-                // there are times when it doesn't have long name
+                // jic it doesn't have the long name
                 wchar_t *temp_pointer = convert_short_name_wchar(&dir_entry, i);
                 wprintf(L"%ls%ls\n", prefix, *temp_pointer);
 

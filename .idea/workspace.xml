@@ -22,11 +22,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f04a3922-7e35-4cda-a5ac-425f36fa6a0a" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/copy_from_image.c" beforeDir="false" afterPath="$PROJECT_DIR$/copy_from_image.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/copy_from_local.c" beforeDir="false" afterPath="$PROJECT_DIR$/copy_from_local.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/list.c" beforeDir="false" afterPath="$PROJECT_DIR$/list.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/list.h" beforeDir="false" afterPath="$PROJECT_DIR$/list.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/remove.c" beforeDir="false" afterPath="$PROJECT_DIR$/remove.c" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -122,7 +118,7 @@
       <workItem from="1680676883899" duration="9589000" />
       <workItem from="1680695021365" duration="458000" />
       <workItem from="1680695733624" duration="6000" />
-      <workItem from="1680706043969" duration="5276000" />
+      <workItem from="1680706043969" duration="5645000" />
     </task>
     <servers />
   </component>

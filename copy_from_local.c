@@ -180,6 +180,7 @@ void copy_from_local(const char *diskimg_path, const char *local_path,
         short_dir.dir.DIR_FstClusHI = 0;
         short_dir.dir.DIR_FileSize = 0;
         // again assuming the time doesn't need to be updated
+        // TODO: Update timing if required
 
         union DirEntry long_dirs[long_entry_required];
         wchar_t w_filename[filename_length];

@@ -292,7 +292,7 @@ void remove_fat_entry(const struct BPB *hdr, FILE *f, uint32_t cluster_number,
         fwrite(entry, (*fat_entry_bytes), 1, f);
     }
 
-    // TODO: update FS Info (optional)
+    // TODO: update FS Info (optional) + Update timing if required
 }
 
 uint32_t get_error_value(const struct BPB *hdr) {

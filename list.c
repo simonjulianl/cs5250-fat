@@ -107,7 +107,7 @@ void read_dir_helper(const struct BPB *hdr, FILE *f, uint32_t max_total_entries,
         hexdump(&names[name_offset - 1], 32);
 #endif
         uint32_t first_offset = name_offset - 2;
-        uint8_t ordinal_value = names[first_offset + 1].ldir.LDIR_Ord;
+        uint8_t ordinal_value = names[first_offset].ldir.LDIR_Ord;
         while ((ordinal_value & LAST_LONG_ENTRY) != LAST_LONG_ENTRY) {
             first_offset--;
             ordinal_value = names[first_offset].ldir.LDIR_Ord;

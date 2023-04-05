@@ -12,7 +12,10 @@
   <component name="CMakeRunConfigurationManager">
     <generated>
       <config projectName="fat" targetName="fat" />
-      <config projectName="fat" targetName="valgrind" />
+      <config projectName="fat" targetName="valgrind_cp" />
+      <config projectName="fat" targetName="valgrind_rm" />
+      <config projectName="fat" targetName="valgrind_ls" />
+      <config projectName="fat" targetName="valgrind_ck" />
     </generated>
   </component>
   <component name="CMakeSettings">
@@ -22,10 +25,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f04a3922-7e35-4cda-a5ac-425f36fa6a0a" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/copy_from_image.c" beforeDir="false" afterPath="$PROJECT_DIR$/copy_from_image.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/copy_from_local.c" beforeDir="false" afterPath="$PROJECT_DIR$/copy_from_local.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/remove.c" beforeDir="false" afterPath="$PROJECT_DIR$/remove.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/remove.h" beforeDir="false" afterPath="$PROJECT_DIR$/remove.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/list.c" beforeDir="false" afterPath="$PROJECT_DIR$/list.c" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -34,7 +35,33 @@
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="b8e65fa76a41ae8e8453e1fc3636313506353c64" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitToolBoxStore">
+    <option name="recentBranches">
+      <RecentBranches>
+        <option name="branchesForRepo">
+          <list>
+            <RecentBranchesForRepo>
+              <option name="branches">
+                <list>
+                  <RecentBranch>
+                    <option name="branchName" value="main" />
+                    <option name="lastUsedInstant" value="1680713974" />
+                  </RecentBranch>
+                </list>
+              </option>
+              <option name="repositoryRootUrl" value="file://$PROJECT_DIR$" />
+            </RecentBranchesForRepo>
+          </list>
+        </option>
+      </RecentBranches>
+    </option>
   </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
@@ -80,6 +107,11 @@
     </key>
   </component>
   <component name="RunManager" selected="CMake Application.fat">
+    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="fat" type="CMakeListConfigurationType" factoryName="CMakeListConfigurationFactory" temporary="true">
       <method v="2" />
     </configuration>
@@ -88,18 +120,37 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="valgrind" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="fat" TARGET_NAME="valgrind" CONFIG_NAME="Debug">
+    <configuration name="valgrind_ck" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="fat" TARGET_NAME="valgrind_ck" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="valgrind_cp" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="fat" TARGET_NAME="valgrind_cp" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="valgrind_ls" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="fat" TARGET_NAME="valgrind_ls" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="valgrind_rm" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="fat" TARGET_NAME="valgrind_rm" CONFIG_NAME="Debug">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
     <list>
       <item itemvalue="CMake Application.fat" />
-      <item itemvalue="CMake Application.valgrind" />
+      <item itemvalue="CMake Application.valgrind_ck" />
+      <item itemvalue="CMake Application.valgrind_cp" />
+      <item itemvalue="CMake Application.valgrind_ls" />
+      <item itemvalue="CMake Application.valgrind_rm" />
       <item itemvalue="CMake Debug.fat" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="CMake Debug.fat" />
         <item itemvalue="CMake Debug.fat" />
       </list>
     </recent_temporary>

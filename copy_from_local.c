@@ -82,8 +82,6 @@ void copy_from_local(const char *diskimg_path, const char *local_path,
 
     FILE *f = fopen(diskimg_path, "rb+");
     if (f == NULL) {
-        fclose(lf);
-        munmap(image, size);
         perror("fopen");
         exit(EXIT_FAILURE);
     }

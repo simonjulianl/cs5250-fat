@@ -21,8 +21,27 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
 endif()
 
 add_executable(fat ${SOURCE_FILES})
+
 add_custom_target(
-        valgrind
+        valgrind_ls
         COMMAND
-        valgrind ./fat diskimage.img ls --leak-check=full --show-leak-kinds=all --verbose -error-exitcode=100
+        valgrind ./fat diskimage32.img ls --leak-check=full --show-leak-kinds=all --verbose -error-exitcode=100
+)
+
+add_custom_target(
+        valgrind_ck
+        COMMAND
+        valgrind ./fat diskimage32.img ck --leak-check=full --show-leak-kinds=all --verbose -error-exitcode=100
+)
+
+add_custom_target(
+        valgrind_rm
+        COMMAND
+        valgrind ./fat diskimage32.img rm / --leak-check=full --show-leak-kinds=all --verbose -error-exitcode=100
+)
+
+add_custom_target(
+        valgrind_cp
+        COMMAND
+        valgrind ./fat diskimage.img cp local:/home/lauwsj/testing image:/testing.txt --leak-check=full --show-leak-kinds=all --verbose -error-exitcode=100
 )

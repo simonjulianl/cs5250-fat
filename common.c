@@ -15,19 +15,19 @@ void get_disk_image_mmap(const char *diskimg_path, off_t *size, uint8_t **image)
     int fd = open(diskimg_path, O_RDONLY);
     if (fd < 0) {
         perror("open");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     // get file length
     (*size) = lseek(fd, 0, SEEK_END);
     if ((*size) == -1) {
         perror("lseek");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     (*image) = mmap(NULL, *size, PROT_READ, MAP_PRIVATE, fd, 0);
     if ((*image) == (void *)-1) {
         close(fd);
         perror("mmap");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     close(fd);
 }
@@ -44,7 +44,7 @@ void hexdump(const void *data, size_t size) {
     proc = popen("hexdump -C", "w");
     if (proc == NULL) {
         perror("popen");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     fwrite(data, 1, size, proc);
 }

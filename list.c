@@ -26,7 +26,7 @@ void list_fat(const char *diskimg_path) {
     FILE *f = fopen(diskimg_path, "rb");
     if (f == NULL) {
         perror("fopen");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     list_root_dir(hdr, f);

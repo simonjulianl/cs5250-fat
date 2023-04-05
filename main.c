@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "copy_from_image.h"
 #include "copy_from_local.h"
@@ -17,13 +18,18 @@ bool starts_with(const char *pre, const char *str) {
 }
 
 int main(int argc, char *argv[]) {
-    setbuf(stdout, NULL);
+    setbuf(stdout, NULL); // unbuffer the stream, immediately output it
     if (argc < 3) {
         fprintf(stderr, "Usage: %s disk.img <ck|ls|rm|cp> [path1] [path2]\n",
                 argv[0]);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
+
     const char *diskimg_path = argv[1];
+    if (access(diskimg_path, F_OK) != 0) {
+        fprintf(stderr, "Unable to locate disk image");
+        exit(EXIT_FAILURE);
+    }
     const char *op = argv[2];
 
     if (strcmp(op, "ck") == 0) {

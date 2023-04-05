@@ -23,15 +23,7 @@
   <component name="ChangeListManager">
     <list default="true" id="f04a3922-7e35-4cda-a5ac-425f36fa6a0a" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common.c" beforeDir="false" afterPath="$PROJECT_DIR$/common.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common.h" beforeDir="false" afterPath="$PROJECT_DIR$/common.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/copy_from_image.c" beforeDir="false" afterPath="$PROJECT_DIR$/copy_from_image.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/copy_from_image.h" beforeDir="false" afterPath="$PROJECT_DIR$/copy_from_image.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/inspection.c" beforeDir="false" afterPath="$PROJECT_DIR$/inspection.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/list.c" beforeDir="false" afterPath="$PROJECT_DIR$/list.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.c" beforeDir="false" afterPath="$PROJECT_DIR$/main.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/remove.c" beforeDir="false" afterPath="$PROJECT_DIR$/remove.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/copy_from_local.c" beforeDir="false" afterPath="$PROJECT_DIR$/copy_from_local.c" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -75,6 +67,7 @@
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
     "settings.editor.selected.configurable": "preferences.keymap",
+    "structure.view.defaults.are.configured": "true",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -85,13 +78,13 @@
     </key>
   </component>
   <component name="RunManager" selected="CMake Application.fat">
-    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="fat" type="CMakeListConfigurationType" factoryName="CMakeListConfigurationFactory" temporary="true">
       <method v="2" />
+    </configuration>
+    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
     </configuration>
     <configuration name="fat" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="fat" TARGET_NAME="fat" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="fat" RUN_TARGET_NAME="fat">
       <method v="2">
@@ -126,7 +119,8 @@
       <workItem from="1680451379157" duration="71799000" />
       <workItem from="1680599152802" duration="4501000" />
       <workItem from="1680609576418" duration="4000" />
-      <workItem from="1680614737519" duration="16572000" />
+      <workItem from="1680614737519" duration="18246000" />
+      <workItem from="1680676883899" duration="8826000" />
     </task>
     <servers />
   </component>

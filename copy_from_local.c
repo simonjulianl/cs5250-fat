@@ -35,8 +35,6 @@ void update_dir_entry_cluster(FILE *f, const union DirEntry *file_entry,
 void clear_up_resources(FILE *lf, off_t size, uint8_t *image, FILE *f,
                         wchar_t *const *image_path_names, int idx_image);
 
-bool is_valid_short_filename_char(char c);
-
 void create_short_filename(const char *filename, char *short_filename);
 
 unsigned char generate_long_name_checksum(unsigned char *short_name);
@@ -540,17 +538,6 @@ void update_dir_entry_cluster(FILE *f, const union DirEntry *file_entry,
     fwrite(&upper_value, 2, 1, f);
     fseek(f, low_offset, SEEK_SET);
     fwrite(&lower_value, 2, 1, f);
-}
-
-bool is_valid_short_filename_char(char c) {
-    if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '.' ||
-        (c >= '0' && c <= '9') || c == '$' || c == '%' || c == '\'' ||
-        c == '-' || c == '_' || c == '@' || c == '~' || c == '`' || c == '!' ||
-        c == '(' || c == ')' || c == '{' || c == '}' || c == '^' || c == '#' ||
-        c == '&' || c == ' ') {
-        return true;
-    }
-    return false;
 }
 
 unsigned char generate_long_name_checksum(unsigned char *short_name) {

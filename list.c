@@ -78,8 +78,21 @@ void read_dir_helper(const struct BPB *hdr, FILE *f, uint32_t max_total_entries,
         if (dir_entry.ldir.LDIR_Attr != ATTR_LONG_NAME) {
             if (!is_excluded_dir(&dir_entry)) {
                 // jic it doesn't have the long name
+                bool is_valid = true;
+                for (int k = 0; k < 11; k++) {
+                    if (!is_valid_short_filename_char(
+                            (char)dir_entry.dir.DIR_Name[k])) {
+                        is_valid = false;
+                        break; // (most) likely corrupted file
+                    }
+                }
+
+                if (!is_valid) {
+                    continue;
+                }
+
                 wchar_t *temp_pointer = convert_short_name_wchar(&dir_entry, i);
-                wprintf(L"%ls%ls\n", prefix, *temp_pointer);
+                wprintf(L"%ls%ls\n", prefix, temp_pointer);
 
                 if (dir_entry.dir.DIR_Attr == ATTR_DIRECTORY) {
                     uint32_t directory_cluster = dir_entry.dir.DIR_FstClusLO;
@@ -175,9 +188,8 @@ wchar_t *convert_short_name_wchar(union DirEntry *dir_entry, uint32_t i) {
                 tolower((*dir_entry).dir.DIR_Name[k]);
         }
     }
-    wchar_t temp[PATH_MAX];
-    mbstowcs(temp, (char *)small_entry, PATH_MAX);
-    wchar_t *temp_pointer = malloc(PATH_MAX);
+    wchar_t *temp_pointer = malloc(PATH_MAX * sizeof(wchar_t));
+    mbstowcs(temp_pointer, (char *)small_entry, PATH_MAX);
     return temp_pointer;
 }
 
@@ -335,4 +347,15 @@ void list_root_dir(const struct BPB *hdr, FILE *f) {
         fseek(f, offset, SEEK_SET);
         read_dir_helper(hdr, f, hdr->BPB_RootEntCnt, L"/");
     }
+}
+
+bool is_valid_short_filename_char(char c) {
+    if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '.' ||
+        (c >= '0' && c <= '9') || c == '$' || c == '%' || c == '\'' ||
+        c == '-' || c == '_' || c == '@' || c == '~' || c == '`' || c == '!' ||
+        c == '(' || c == ')' || c == '{' || c == '}' || c == '^' || c == '#' ||
+        c == '&' || c == ' ') {
+        return true;
+    }
+    return false;
 }

@@ -25,6 +25,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f04a3922-7e35-4cda-a5ac-425f36fa6a0a" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/list.c" beforeDir="false" afterPath="$PROJECT_DIR$/list.c" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -106,11 +107,6 @@
     </key>
   </component>
   <component name="RunManager" selected="CMake Application.fat">
-    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="fat" type="CMakeListConfigurationType" factoryName="CMakeListConfigurationFactory" temporary="true">
       <method v="2" />
     </configuration>
@@ -171,6 +167,9 @@
       <workItem from="1680695021365" duration="458000" />
       <workItem from="1680695733624" duration="6000" />
       <workItem from="1680706043969" duration="6650000" />
+      <workItem from="1681030618826" duration="96000" />
+      <workItem from="1681581697026" duration="4215000" />
+      <workItem from="1681586599319" duration="382000" />
     </task>
     <servers />
   </component>

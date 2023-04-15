@@ -45,4 +45,6 @@ void get_fat_offset_given_cluster(const struct BPB *hdr,
 
 wchar_t *convert_short_name_wchar(union DirEntry *dir_entry, uint32_t i);
 
+bool is_valid_short_filename_char(char c);
+
 #endif // FAT_LIST_H
